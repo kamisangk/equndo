@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Tooling -&gt; Bootstrap Workspace" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+    <option name="filePath" value="$PROJECT_DIR$/tool/bootstrap_workspace.dart" />
+    <method v="2" />
+  </configuration>
+</component>

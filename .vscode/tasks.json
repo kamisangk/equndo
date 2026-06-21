@@ -1,0 +1,142 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Bootstrap workspace",
+            "type": "process",
+            "hide": true,
+            "command": "dart",
+            "args": [
+                "tool/bootstrap_workspace.dart"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Prepare (debug)",
+            "type": "process",
+            "hide": true,
+            "command": "dart",
+            "args": [
+                "tool/project_tasks.dart",
+                "run:prepare",
+                "--debug"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Prepare (profile)",
+            "type": "process",
+            "hide": true,
+            "command": "dart",
+            "args": [
+                "tool/project_tasks.dart",
+                "run:prepare",
+                "--profile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Prepare (release)",
+            "type": "process",
+            "hide": true,
+            "command": "dart",
+            "args": [
+                "tool/project_tasks.dart",
+                "run:prepare",
+                "--release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Generate l10n",
+            "type": "process",
+            "command": "dart",
+            "args": [
+                "tool/gen_l10n.dart"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "App Doctor",
+            "type": "process",
+            "command": "dart",
+            "args": [
+                "tool/project_prep.dart",
+                "doctor"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "never",
+                "panel": "shared",
+                "clear": true,
+                "close": true,
+                "showReuseMessage": false,
+                "focus": false,
+                "echo": false
+            },
+            "problemMatcher": []
+        }
+    ]
+}

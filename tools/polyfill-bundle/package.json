@@ -1,0 +1,23 @@
+{
+  "name": "@fluxdo/polyfill-bundle",
+  "private": true,
+  "version": "1.0.0",
+  "description": "给老 WKWebView (主要 iOS 15+) 打包 ES2022+ polyfill，由 Babel preset-env + core-js 按 browserslist 自动缩减，esbuild 打成 IIFE。产物输出到 ../../assets/polyfill/compat-polyfill.js。",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "core-js": "^3.49.0",
+    "esbuild": "^0.28.0"
+  },
+  "browserslist": [
+    "iOS >= 15.0"
+  ],
+  "dependencies": {
+    "eruda": "^3.4.3",
+    "es-module-shims": "^2.8.1"
+  }
+}

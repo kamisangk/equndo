@@ -1,0 +1,162 @@
+{
+  "@@locale": "zh",
+  "bottomNav_actionPickerTitle": "选择动作",
+  "bottomNav_customizeLayout": "自定义底栏项",
+  "bottomNav_customizeLayoutDesc": "选择显示哪些入口、调整顺序",
+  "bottomNav_doubleTapAction": "双击已选中项",
+  "bottomNav_doubleTapActionDesc": "300ms 内第二次点击时执行的动作",
+  "bottomNav_editorAvailable": "可添加",
+  "bottomNav_editorEmptyAvailable": "没有可添加的入口",
+  "bottomNav_editorEnabled": "已启用",
+  "bottomNav_editorEnabledHint": "{count}/{max} 项，至少 {min} 项",
+  "@bottomNav_editorEnabledHint": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "bottomNav_editorLockedHint": "必备项，不可移除",
+  "bottomNav_editorMaxReached": "最多 {max} 项",
+  "@bottomNav_editorMaxReached": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "bottomNav_editorMinReached": "至少保留 {min} 项",
+  "@bottomNav_editorMinReached": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "bottomNav_editorPreviewHint": "拖动调整顺序，首页始终保持在第一位",
+  "bottomNav_editorRequiresLogin": "需要登录",
+  "bottomNav_editorRestoreDefault": "恢复默认",
+  "bottomNav_editorRestoreDefaultConfirm": "确定要恢复为默认布局吗？",
+  "bottomNav_editorTitle": "底栏布局",
+  "bottomNav_gesturesGroup": "手势",
+  "bottomNav_singleTapAction": "单击已选中项",
+  "bottomNav_singleTapActionDesc": "再次点击已选中的标签时执行的动作",
+  "bottomNav_title": "底栏",
+  "cfVerify_autoTitle": "自动触发 CF 验证",
+  "cfVerify_autoDesc": "检测到 Cloudflare 安全盾时自动弹出验证页面；关闭后仅在错误页面手动触发",
+  "navTapAction_none": "无",
+  "navTapAction_refresh": "刷新",
+  "navTapAction_scrollToTop": "回到顶部",
+  "config_seedUserTitle": "种子用户",
+  "preferences_advanced": "高级",
+  "preferences_anonymousShare": "匿名分享",
+  "preferences_anonymousShareDesc": "分享链接时不附带个人用户标识",
+  "preferences_autoFillLogin": "自动填充登录",
+  "preferences_autoFillLoginDesc": "记住账号密码，登录时自动填充",
+  "preferences_clipboardTopicLinkDetection": "自动识别剪贴板话题链接",
+  "preferences_clipboardTopicLinkDetectionDesc": "回到应用时检测剪贴板中的 Linux.do 话题链接，并在底部询问是否打开",
+  "preferences_clipboardTopicLink_detected": "检测到剪贴板中的话题链接",
+  "preferences_clipboardTopicLink_open": "打开",
+  "preferences_topicFilterKeywords": "标题关键词过滤",
+  "preferences_topicFilterKeywordsDesc": "过滤标题包含指定关键词的话题，每行一个关键词",
+  "preferences_topicFilterKeywordsEmpty": "未设置关键词",
+  "preferences_topicFilterKeywordsCount": "已设置 {count} 个关键词",
+  "@preferences_topicFilterKeywordsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "preferences_topicFilterKeywordsHint": "每行输入一个关键词",
+  "preferences_topicFilterKeywordsHelper": "仅匹配话题标题，子串匹配，不区分大小写",
+  "preferences_topicFilterWholeWord": "完整词匹配",
+  "preferences_topicFilterWholeWordDesc": "开启后英文关键词不再匹配子串，如 ai 不会命中 Main thread；中文关键词无影响",
+  "preferences_autoPanguSpacing": "自动混排优化",
+  "preferences_autoPanguSpacingDesc": "输入时自动插入中英文混排空格",
+  "preferences_basic": "基础",
+  "preferences_cfClearanceRefresh": "cf_clearance 自动续期",
+  "preferences_cfClearanceRefreshDesc": "通过后台 WebView 自动续期 cf_clearance Cookie",
+  "preferences_crashlytics": "崩溃日志上报",
+  "preferences_crashlyticsDesc": "发生崩溃时自动上报日志，帮助开发者定位问题",
+  "preferences_editor": "编辑器",
+  "preferences_enableCrashlyticsContent": "本应用使用 Firebase Crashlytics 收集崩溃信息以改进应用稳定性。\n\n收集的数据包括设备信息和崩溃详情，不包含个人隐私数据。您可以在设置中关闭此功能。",
+  "preferences_enableCrashlyticsTitle": "数据收集说明",
+  "preferences_enterUrl": "输入 URL",
+  "preferences_hideBarOnScroll": "滚动收起导航栏",
+  "preferences_hideBarOnScrollDesc": "首页滚动时自动收起顶栏和底栏",
+  "preferences_longPressPreview": "长按预览",
+  "preferences_longPressPreviewDesc": "长按话题卡片快速预览内容",
+  "preferences_openLinksInApp": "外部链接使用内置浏览器",
+  "preferences_openLinksInAppDesc": "贴内外部链接优先在应用内打开",
+  "preferences_portraitLock": "竖屏锁定",
+  "preferences_portraitLockDesc": "锁定屏幕方向为竖屏",
+  "preferences_stickerSource": "表情包数据源",
+  "preferences_title": "功能设置",
+  "settings_about": "关于 EqunDO",
+  "settings_appearance": "外观设置",
+  "settings_bottomNav": "底栏设置",
+  "settings_dataManagement": "数据管理",
+  "settings_network": "网络设置",
+  "settings_preferences": "功能设置",
+  "settings_reading": "阅读设置",
+  "reading_bookmarksOpenMode": "默认打开标签页方式",
+  "reading_bookmarksOpenModeDefault": "默认",
+  "reading_bookmarksOpenModeTabbedWorkspace": "标签页模式",
+  "settings_searchEmpty": "未找到匹配的设置项",
+  "settings_searchHint": "搜索设置项...",
+  "settings_shortcuts": "快捷键",
+  "settings_title": "应用设置",
+  "shortcuts_closeOverlay": "关闭浮层",
+  "shortcuts_conflict": "与「{action}」冲突",
+  "@shortcuts_conflict": {
+    "placeholders": {
+      "action": {
+        "type": "String"
+      }
+    }
+  },
+  "shortcuts_content": "内容",
+  "shortcuts_createTopic": "创建话题",
+  "shortcuts_customizeHint": "在 设置 > 快捷键 中自定义",
+  "shortcuts_deletePost": "删除当前帖子",
+  "shortcuts_editPost": "编辑当前帖子",
+  "shortcuts_flagPost": "举报当前帖子",
+  "shortcuts_goToUnreadPost": "跳转到首个未读楼层",
+  "shortcuts_jumpToPost": "跳转到楼层",
+  "shortcuts_bookmarkPost": "收藏当前帖子",
+  "shortcuts_bookmarkTopic": "收藏话题",
+  "shortcuts_likePost": "点赞当前帖子",
+  "shortcuts_navigateBack": "返回",
+  "shortcuts_navigateBackAlt": "返回（备用）",
+  "shortcuts_navigation": "导航",
+  "shortcuts_nextItem": "下一个条目",
+  "shortcuts_nextTab": "下一个分类",
+  "shortcuts_openItem": "打开选中条目",
+  "shortcuts_openSearch": "搜索",
+  "shortcuts_openSettings": "打开设置",
+  "shortcuts_post": "帖子",
+  "shortcuts_previousItem": "上一个条目",
+  "shortcuts_previousTab": "上一个分类",
+  "shortcuts_recordKey": "请按下新的快捷键组合",
+  "shortcuts_refresh": "刷新",
+  "shortcuts_replyPost": "回复当前帖子",
+  "shortcuts_replyTopic": "回复话题",
+  "shortcuts_resetAll": "恢复所有默认",
+  "shortcuts_resetOne": "恢复默认",
+  "shortcuts_quotePost": "引用当前帖子",
+  "shortcuts_sharePost": "分享当前帖子",
+  "shortcuts_shareTopic": "分享话题",
+  "shortcuts_showHelp": "快捷键帮助",
+  "shortcuts_switchPane": "切换面板焦点",
+  "shortcuts_switchToProfile": "切换到个人",
+  "shortcuts_switchToTopics": "切换到话题",
+  "shortcuts_toggleNotifications": "通知面板",
+  "shortcuts_topic": "话题"
+}

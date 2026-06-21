@@ -1,0 +1,17 @@
+name: enhanced_cookie_jar
+description: Enhanced cookie jar with richer metadata and persistent storage.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+resolution: workspace
+
+dependencies:
+  cookie_jar: ^4.0.8
+  path: ^1.9.1
+  universal_io: ^2.2.2
+
+dev_dependencies:
+  test: ^1.25.8

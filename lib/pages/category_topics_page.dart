@@ -1,0 +1,462 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/topic.dart';
+import '../models/category.dart';
+import '../providers/discourse_providers.dart';
+import '../providers/equn_discuz_providers.dart';
+import '../providers/selected_topic_provider.dart';
+import '../providers/preferences_provider.dart';
+import '../utils/load_more_coordinator.dart';
+import '../utils/pagination_helper.dart';
+import '../utils/topic_keyword_filter.dart';
+import '../widgets/common/paged_list_footer.dart';
+import '../widgets/topic/topic_list_skeleton.dart';
+import '../widgets/topic/keyword_filter_hint_bar.dart';
+import '../widgets/topic/sort_and_tags_bar.dart';
+import '../widgets/topic/topic_item_builder.dart';
+import '../widgets/common/error_view.dart';
+import 'equn_thread_detail_page.dart';
+import '../l10n/s.dart';
+import '../services/discuz/equn_discuz_adapter.dart';
+import '../widgets/desktop_refresh_indicator.dart';
+import 'create_topic_page.dart';
+import '../utils/equn_search_launcher.dart';
+
+/// 分类话题列表页面（独立页面，不影响首页筛选）
+class CategoryTopicsPage extends ConsumerStatefulWidget {
+  final Category category;
+
+  const CategoryTopicsPage({super.key, required this.category});
+
+  @override
+  ConsumerState<CategoryTopicsPage> createState() => _CategoryTopicsPageState();
+}
+
+class _CategoryTopicsPageState extends ConsumerState<CategoryTopicsPage> {
+  final ScrollController _scrollController = ScrollController();
+  final TopicLoadMoreCoordinator _loadMoreCoordinator =
+      TopicLoadMoreCoordinator();
+  List<Topic> _topics = [];
+  bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _isLoadMoreFailed = false;
+  bool _hasMore = true;
+  int _page = 0;
+  Object? _error;
+
+  // 本地筛选、排序状态保留原 UI；Discuz 板块接口实际按站点返回顺序展示。
+  late TopicListFilter _currentFilter;
+  late NewSubset _currentSubset;
+  TopicSortOrder _currentOrder = TopicSortOrder.defaultOrder;
+  bool _ascending = false;
+  List<String> _lastAutoLoadKeywords = const [];
+  bool? _lastAutoLoadWholeWord;
+
+  static final _paginationHelper = PaginationHelpers.forTopics<Topic>(
+    keyExtractor: (topic) => topic.id,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _currentFilter = ref.read(topicFilterProvider);
+    _currentSubset = ref.read(topicNewSubsetProvider);
+    _currentOrder = ref.read(topicSortOrderProvider);
+    _ascending = ref.read(topicSortAscendingProvider);
+    _scrollController.addListener(_onScroll);
+    _loadTopics();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final distance =
+        _scrollController.position.maxScrollExtent -
+        _scrollController.position.pixels;
+    if (_loadMoreCoordinator.shouldTriggerForDistance(distance)) {
+      _loadMoreWithAutoContinue();
+    }
+  }
+
+  /// 触发 loadMore；若关键词命中率高、可见增量不足，自动续加载至多 3 次。
+  Future<void> _loadMoreWithAutoContinue() async {
+    final prefs = ref.read(preferencesProvider);
+    final keywords = prefs.normalizedFilterKeywords;
+    final wholeWord = prefs.topicFilterWholeWord;
+
+    int visibleItemCount() {
+      final (visible, _) = TopicKeywordFilter.apply(
+        _topics,
+        normalizedKeywords: keywords,
+        wholeWord: wholeWord,
+      );
+      return visible.length;
+    }
+
+    await _loadMoreCoordinator.loadTopicPage(
+      loadMore: _loadMore,
+      hasMore: () => _hasMore,
+      isActive: () => mounted,
+      itemCount: () => _topics.length,
+      visibleItemCount: visibleItemCount,
+      hasKeywordFilter: keywords.isNotEmpty,
+    );
+  }
+
+  Future<void> _loadTopics() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final response = await _fetchForumTopicResponse(page: 1);
+
+      final result = _paginationHelper.processRefresh(
+        PaginationResult(
+          items: response.topics,
+          moreUrl: response.moreTopicsUrl,
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _topics = result.items;
+          _hasMore = result.hasMore;
+          _page = 0;
+          _isLoading = false;
+        });
+        _loadMoreCoordinator.resetCooldown();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e;
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// 静默刷新（不显示 loading）
+  Future<void> _silentRefresh() async {
+    try {
+      final response = await _fetchForumTopicResponse(page: 1);
+
+      final result = _paginationHelper.processRefresh(
+        PaginationResult(
+          items: response.topics,
+          moreUrl: response.moreTopicsUrl,
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _topics = result.items;
+          _hasMore = result.hasMore;
+          _page = 0;
+        });
+        _loadMoreCoordinator.resetCooldown();
+      }
+    } catch (e, s) {
+      debugPrint('[CategoryTopicsPage] silent refresh failed: $e\n$s');
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (_isLoadMoreFailed) return;
+    if (!_hasMore || _isLoadingMore || _isLoading) return;
+
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final nextPage = _page + 1;
+      final response = await _fetchForumTopicResponse(page: nextPage + 1);
+
+      final currentState = PaginationState(items: _topics);
+      final result = _paginationHelper.processLoadMore(
+        currentState,
+        PaginationResult(
+          items: response.topics,
+          moreUrl: response.moreTopicsUrl,
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _hasMore = result.hasMore;
+          if (response.topics.isEmpty) {
+            _hasMore = false;
+          } else {
+            _page = nextPage;
+          }
+          _topics = result.items;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          _isLoadMoreFailed = true;
+        });
+      }
+    }
+  }
+
+  Future<TopicListResponse> _fetchForumTopicResponse({
+    required int page,
+  }) async {
+    final service = ref.read(equnDiscuzServiceProvider);
+    final forumPage = await service.fetchForumTopics(
+      widget.category.id,
+      page: page,
+    );
+    final hasMore =
+        forumPage.topics.isNotEmpty &&
+        forumPage.topics.length >= forumPage.pageSize;
+    return EqunDiscuzAdapter.forumTopicsToResponse(forumPage, hasMore: hasMore);
+  }
+
+  void _setFilter(TopicListFilter filter) {
+    if (filter == _currentFilter) return;
+    setState(() => _currentFilter = filter);
+    ref.read(topicFilterProvider.notifier).setFilter(filter);
+    _loadMoreCoordinator.resetCooldown();
+    _loadTopics();
+  }
+
+  void _setSubset(NewSubset subset) {
+    if (subset == _currentSubset) return;
+    setState(() => _currentSubset = subset);
+    ref.read(topicNewSubsetProvider.notifier).setSubset(subset);
+    _loadMoreCoordinator.resetCooldown();
+    _loadTopics();
+  }
+
+  void _setOrder(TopicSortOrder order) {
+    if (order == _currentOrder) return;
+    setState(() => _currentOrder = order);
+    _loadMoreCoordinator.resetCooldown();
+    _loadTopics();
+  }
+
+  void _toggleAscending() {
+    setState(() => _ascending = !_ascending);
+    _loadMoreCoordinator.resetCooldown();
+    _loadTopics();
+  }
+
+  void _syncAutoLoadFilter(List<String> keywords, bool wholeWord) {
+    if (listEquals(_lastAutoLoadKeywords, keywords) &&
+        _lastAutoLoadWholeWord == wholeWord) {
+      return;
+    }
+    _lastAutoLoadKeywords = List.unmodifiable(keywords);
+    _lastAutoLoadWholeWord = wholeWord;
+    _loadMoreCoordinator.resetCooldown();
+  }
+
+  Future<void> _createTopic() async {
+    final topicId = await Navigator.push<int>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateTopicPage(
+          initialCategoryId: widget.category.id,
+          useEqunComposer: true,
+        ),
+      ),
+    );
+    if (topicId != null && mounted) {
+      _silentRefresh();
+    }
+  }
+
+  Future<void> _openTopic(Topic topic) async {
+    // 分类详情页是独立 push 的页面，不在首页 MasterDetailLayout 内，
+    // 始终 push 全屏详情页，禁用 autoSwitchToMasterDetail 防止双栏模式下自动 pop。
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            EqunThreadDetailPage(tid: topic.id, initialTitle: topic.title),
+      ),
+    );
+
+    // 从话题详情返回后，静默刷新以获取 MessageBus 更新的状态
+    if (mounted) {
+      _silentRefresh();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedTopicId = ref.watch(selectedTopicProvider).topicId;
+    final isLoggedIn = ref.watch(currentUserProvider).value != null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.category.name),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => EqunSearchLauncher.open(context),
+            tooltip: context.l10n.common_search,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 筛选 + 排序 + 标签栏
+          SortAndTagsBar(
+            currentFilter: _currentFilter,
+            isLoggedIn: isLoggedIn,
+            onFilterChanged: _setFilter,
+            currentSubset: _currentSubset,
+            onSubsetChanged: _setSubset,
+            currentOrder: _currentOrder,
+            ascending: _ascending,
+            onOrderChanged: _setOrder,
+            onToggleAscending: _toggleAscending,
+            selectedTags: const [],
+            onTagRemoved: (_) {},
+            trailing: isLoggedIn
+                ? _CreateTopicButton(onPressed: _createTopic)
+                : null,
+          ),
+          // 列表
+          Expanded(child: _buildBody(selectedTopicId)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(int? selectedTopicId) {
+    if (_isLoading) {
+      return const TopicListSkeleton(padding: EdgeInsets.all(12));
+    }
+
+    if (_error != null) {
+      return ErrorView(error: _error!, onRetry: _loadTopics);
+    }
+
+    if (_topics.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              size: 48,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 12),
+            Text(context.l10n.categoryTopics_empty),
+          ],
+        ),
+      );
+    }
+
+    final keywords = ref.watch(
+      preferencesProvider.select((p) => p.normalizedFilterKeywords),
+    );
+    final wholeWord = ref.watch(
+      preferencesProvider.select((p) => p.topicFilterWholeWord),
+    );
+    _syncAutoLoadFilter(keywords, wholeWord);
+    final (visible, hidden) = TopicKeywordFilter.apply(
+      _topics,
+      normalizedKeywords: keywords,
+      wholeWord: wholeWord,
+    );
+    final hintOffset = hidden > 0 ? 1 : 0;
+
+    return DesktopRefreshIndicator(
+      onRefresh: _loadTopics,
+      child: ListView.builder(
+        controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(12),
+        itemCount: visible.length + hintOffset + 1,
+        itemBuilder: (context, index) {
+          if (hintOffset > 0 && index == 0) {
+            return KeywordFilterHintBar(hiddenCount: hidden);
+          }
+          final topicIndex = index - hintOffset;
+          if (topicIndex >= visible.length) {
+            return PagedListFooter(
+              hasMore: _hasMore,
+              isLoadingMore: _isLoadingMore,
+              isLoadMoreFailed: _isLoadMoreFailed,
+              onRetry: () {
+                setState(() => _isLoadMoreFailed = false);
+                _loadMore();
+              },
+            );
+          }
+
+          final topic = visible[topicIndex];
+          final enableLongPress = ref
+              .watch(preferencesProvider)
+              .longPressPreview;
+
+          return buildTopicItem(
+            context: context,
+            topic: topic,
+            isSelected: topic.id == selectedTopicId,
+            onTap: () => _openTopic(topic),
+            enableLongPress: enableLongPress,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 创建话题快捷按钮（紧凑 chip 样式）
+class _CreateTopicButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _CreateTopicButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bgColor = theme.colorScheme.primaryContainer.withValues(alpha: 0.3);
+    final fgColor = theme.colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.edit_outlined, size: 14, color: fgColor),
+              const SizedBox(width: 4),
+              Text(
+                context.l10n.categoryTopics_createPost,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fgColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,120 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../l10n/s.dart';
+import '../../navigation/nav_action_bus.dart';
+import '../../providers/preferences_provider.dart';
+import '../../utils/dialog_utils.dart';
+import '../settings_model.dart';
+
+/// 底栏设置数据声明
+///
+/// 只负责"手势"分组（两个动作选择）。布局编辑 UI 在
+/// [BottomNavSettingsPage] 内手写，不走数据驱动渲染。
+List<SettingsGroup> buildBottomNavGroups(BuildContext context) {
+  final l10n = context.l10n;
+  return [
+    SettingsGroup(
+      title: l10n.bottomNav_gesturesGroup,
+      icon: Icons.touch_app_rounded,
+      items: [
+        ActionModel(
+          id: 'bottomSingleTapAction',
+          title: l10n.bottomNav_singleTapAction,
+          subtitle: l10n.bottomNav_singleTapActionDesc,
+          icon: Icons.radio_button_checked_rounded,
+          getDynamicSubtitle: (ref) =>
+              ref.watch(preferencesProvider).bottomSingleTapAction.label,
+          onTap: (ctx, ref) => _pickAction(
+            ctx,
+            ref,
+            isDouble: false,
+            current: ref.read(preferencesProvider).bottomSingleTapAction,
+          ),
+        ),
+        ActionModel(
+          id: 'bottomDoubleTapAction',
+          title: l10n.bottomNav_doubleTapAction,
+          subtitle: l10n.bottomNav_doubleTapActionDesc,
+          icon: Icons.double_arrow_rounded,
+          getDynamicSubtitle: (ref) =>
+              ref.watch(preferencesProvider).bottomDoubleTapAction.label,
+          onTap: (ctx, ref) => _pickAction(
+            ctx,
+            ref,
+            isDouble: true,
+            current: ref.read(preferencesProvider).bottomDoubleTapAction,
+          ),
+        ),
+      ],
+    ),
+  ];
+}
+
+Future<void> _pickAction(
+  BuildContext context,
+  WidgetRef ref, {
+  required bool isDouble,
+  required NavTapAction current,
+}) async {
+  final chosen = await showAppDialog<NavTapAction>(
+    context: context,
+    builder: (dialogContext) => SimpleDialog(
+      title: Text(dialogContext.l10n.bottomNav_actionPickerTitle),
+      children: [
+        for (final action in NavTapAction.values)
+          _ActionOptionTile(
+            action: action,
+            selected: action == current,
+            onTap: () => Navigator.pop(dialogContext, action),
+          ),
+      ],
+    ),
+  );
+  if (chosen == null) return;
+  final notifier = ref.read(preferencesProvider.notifier);
+  if (isDouble) {
+    await notifier.setBottomDoubleTapAction(chosen);
+  } else {
+    await notifier.setBottomSingleTapAction(chosen);
+  }
+}
+
+class _ActionOptionTile extends StatelessWidget {
+  const _ActionOptionTile({
+    required this.action,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final NavTapAction action;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final icon = action.icon;
+    return ListTile(
+      leading: icon != null
+          ? Icon(
+              icon,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+            )
+          : Icon(
+              Icons.block_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+      title: Text(action.label),
+      trailing: selected
+          ? Icon(
+              Icons.check_rounded,
+              color: theme.colorScheme.primary,
+            )
+          : null,
+      onTap: onTap,
+    );
+  }
+}

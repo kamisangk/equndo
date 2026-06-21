@@ -1,0 +1,14 @@
+{
+  "@@locale": "zh_TW",
+  "chat_thread": "執行緒",
+  "github_commentedOn": " 評論於 ",
+  "github_moreFiles": "... 還有 {count} 個檔案",
+  "@github_moreFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "github_viewFullCode": "點選檢視完整程式碼"
+}

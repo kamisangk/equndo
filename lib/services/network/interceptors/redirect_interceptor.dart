@@ -1,0 +1,64 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+
+/// 重定向拦截器
+/// 手动处理 301/302/307/308 重定向，确保重定向时使用正确的 cookie
+class RedirectInterceptor extends Interceptor {
+  RedirectInterceptor(this._dio);
+
+  final Dio _dio;
+
+  @override
+  Future<void> onResponse(
+    Response response,
+    ResponseInterceptorHandler handler,
+  ) async {
+    // 检查是否跳过重定向处理
+    if (response.requestOptions.extra['skipRedirect'] == true) {
+      return handler.next(response);
+    }
+
+    final statusCode = response.statusCode;
+    if (statusCode == 301 ||
+        statusCode == 302 ||
+        statusCode == 307 ||
+        statusCode == 308) {
+      final location = response.headers.value('location');
+      if (location != null) {
+        debugPrint('[Dio] Redirect $statusCode -> $location');
+
+        // 解析重定向 URL
+        final redirectUri = Uri.parse(location);
+        final absoluteUrl = redirectUri.isAbsolute
+            ? location
+            : response.requestOptions.uri
+                .resolve(location)
+                .toString();
+
+        // 创建新请求，不保留原始 cookie header
+        // CookieManager 会为新 URL 重新获取正确的 cookie
+        final newOptions = Options(
+          method: response.requestOptions.method,
+          headers: Map<String, dynamic>.from(response.requestOptions.headers)
+            ..remove('cookie')
+            ..remove('Cookie'),
+          extra: response.requestOptions.extra,
+          responseType: response.requestOptions.responseType,
+          validateStatus: response.requestOptions.validateStatus,
+        );
+
+        try {
+          final redirectResponse =
+              await _dio.request(absoluteUrl, options: newOptions);
+          return handler.resolve(redirectResponse);
+        } catch (e) {
+          if (e is DioException) {
+            return handler.reject(e);
+          }
+          rethrow;
+        }
+      }
+    }
+    handler.next(response);
+  }
+}

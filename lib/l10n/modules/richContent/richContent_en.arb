@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "chat_thread": "Thread",
+  "github_commentedOn": " commented on ",
+  "github_moreFiles": "... and {count} more files",
+  "github_viewFullCode": "View full code"
+}

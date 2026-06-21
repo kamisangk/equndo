@@ -1,0 +1,102 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+**/__pycache__/
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Shared JetBrains/Android Studio run configurations live in .run/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+# 不带前导斜杠：递归 ignore 所有子目录的 build/（含 packages/*/build/）
+build/
+/coverage/
+.artifacts/
+flatpak/stage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+.ace-tool/
+
+# PDB debug files
+*.pdb
+
+# Android JNI libraries (generated from Rust)
+android/app/src/main/jniLibs/
+
+# Desktop native runtime artifacts (generated from Rust)
+windows/runner/native/*
+!windows/runner/native/.keep
+linux/runner/native/*
+!linux/runner/native/.keep
+macos/Runner/native/*
+!macos/Runner/native/.keep
+
+# iOS Rust static libraries (generated from Rust)
+ios/rust_libs/
+
+# FVM Version Cache
+.fvm/
+
+# Codex
+.codex/
+
+# Melos
+.melos_tool/
+packages/ai_model_manager/pubspec.lock
+packages/enhanced_cookie_jar/pubspec.lock
+packages/extended_image_lite/pubspec.lock
+packages/pangutext/pubspec.lock
+packages/paper_shaders/pubspec.lock
+
+# Firebase config (contains API keys)
+android/app/google-services.json
+
+# Generated CA certificates (CI/local build auto-generates)
+assets/certs/proxy_ca.pem
+android/app/src/main/res/raw/proxy_ca.der
+
+# Local Apple signing overrides
+apple/Local.xcconfig
+
+# L10n generated files
+lib/l10n/slang/
+lib/l10n/generated/app_localizations_compat.g.dart
+
+# DevTools extension 构建产物 (通过 tool/build_devtools_extension.sh 生成)
+extension/devtools/build/
+devtools_extension/.flutter-plugins
+devtools_extension/pubspec.lock

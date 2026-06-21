@@ -1,0 +1,25 @@
+{
+  "@@locale": "zh_HK",
+  "nav_bookmarks": "書籤",
+  "nav_drafts": "草稿",
+  "nav_history": "瀏覽記錄",
+  "nav_home": "首頁",
+  "nav_messages": "私訊",
+  "nav_mine": "我的",
+  "nav_notifications": "通知",
+  "toast_authorizationFailed": "授權失敗: {error}",
+  "@toast_authorizationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "toast_credentialCleared": "憑證已清除",
+  "toast_credentialIncomplete": "請填寫完整的憑證信息",
+  "toast_credentialSaved": "憑證保存成功",
+  "toast_networkDisconnected": "網絡連接已斷開",
+  "toast_networkRestored": "網絡已恢復",
+  "toast_operationFailedRetry": "操作失敗，請重試",
+  "toast_pressAgainToExit": "再按一次返回鍵退出"
+}

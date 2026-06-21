@@ -1,0 +1,19 @@
+name: paper_shaders
+description: GPU shader 驱动的动画背景效果集合，基于 @paper-design/shaders 移植。
+version: 0.0.1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.10.4 <4.0.0'
+  flutter: '>=3.38.0'
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  shaders:
+    - shaders/grain_gradient.frag
+    - shaders/mesh_gradient.frag

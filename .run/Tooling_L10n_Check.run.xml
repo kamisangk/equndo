@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Tooling -&gt; L10n Check" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+    <option name="filePath" value="$PROJECT_DIR$/tool/gen_l10n.dart" />
+    <option name="arguments" value="--check" />
+    <method v="2" />
+  </configuration>
+</component>

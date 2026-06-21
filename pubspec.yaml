@@ -1,0 +1,203 @@
+name: fluxdo
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.0.1+1
+
+environment:
+  sdk: ^3.10.4
+
+workspace:
+  - packages/enhanced_cookie_jar
+  - packages/extended_image_lite
+  - packages/pangutext
+  - packages/paper_shaders
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  # tool/gen_l10n.dart 直接调用 slang 内部 runner，升级时需一起验证。
+  slang: 4.14.0
+  slang_flutter: 4.14.0
+  collection: ^1.19.1
+  synchronized: ^3.4.0+1
+  dio: ^5.9.0
+  http: ^1.6.0
+  dio_cookie_manager: ^3.1.1
+  cookie_jar: ^4.0.8
+  native_dio_adapter: ^1.6.0
+  flutter_secure_storage: ^10.3.1
+  flutter_inappwebview: ^6.2.0-beta.3
+  cached_network_image: ^3.4.1
+  octo_image: ^2.1.0
+  flutter_cache_manager: ^3.4.1
+  # 自研:native Rust 解码动图(GIF/APNG/动画 WebP),绕开 Flutter Skia
+  # multi_frame_codec 在 disposal=2 等场景下的 #85831 bug。
+  # 源码:https://github.com/Lingyan000/native_animated_image
+  native_animated_image: ^0.3.2
+  flutter_riverpod: ^3.3.2
+  flutter_widget_from_html: ^0.17.2
+  extended_image_lite:
+    path: packages/extended_image_lite
+  enhanced_cookie_jar:
+    path: packages/enhanced_cookie_jar
+  re_highlight: ^0.0.3
+  google_fonts: ^8.0.0
+  share_plus: ^12.0.1
+  cross_file: ^0.3.4+2
+  open_filex: ^4.7.0
+  file_picker: ^10.3.10
+  intl: ^0.20.2
+  url_launcher: ^6.3.1
+  font_awesome_flutter: ^11.0.0
+  phosphor_flutter:
+    # 临时使用 fork 仓库（PR #62），等官方合并后切回 pub.dev
+    # https://github.com/phosphor-icons/phosphor-flutter/pull/62
+    git:
+      url: https://github.com/subarnaPdl/phosphor_icons.git
+      ref: 514f0a883571c4453dbd6ee3041d1dcba4fb8fc7
+  # NOTE: If updating font_awesome_flutter, run:
+  #   dart run tool/gen_fa_name_mapping.dart
+  shared_preferences: ^2.5.4
+  flutter_displaymode: ^0.7.0  # Android 高刷新率支持
+  dynamic_color: ^1.8.1
+  scroll_to_index: ^3.0.1
+  visibility_detector: ^0.4.0+2
+  markdown: ^7.3.1
+  emoji_extension: ^1.3.0
+  image_picker: ^1.2.1
+  super_clipboard: ^0.9.1
+  gal: ^2.3.2
+  pangutext:
+    path: packages/pangutext
+  paper_shaders:
+    path: packages/paper_shaders
+  flutter_local_notifications: ^21.0.0
+  jovial_svg: ^1.1.29
+  html: ^0.15.5
+  dio_smart_retry: ^7.0.1
+  extended_nested_scroll_view: ^6.2.1
+  popover: ^0.4.0
+  uuid: ^4.5.2
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  hive_ce: ^2.19.3
+  hive_ce_flutter: ^2.3.4
+  dns_client: ^1.3.1
+  cronet_http: ^1.8.0
+  package_info_plus: ^8.1.2
+  pro_image_editor: ^11.18.4
+  flutter_image_compress: ^2.4.0
+  image: ^4.7.2
+  flutter_math_fork: ^0.7.4
+  device_info_plus: 12.3.0
+  connectivity_plus: 7.0.0
+  ua_client_hints: ^1.4.1
+  ota_update: ^7.1.0
+  app_links: ^7.1.1
+  chat_bottom_container: ^0.4.0
+  # AVIF 解码器(libavif + dav1d)。之前在 v0.2.x 移除,但 native_animated_image
+  # 内置的 zenavif (rav1d-safe) 在 ARM SIMD path 有 panic bug,会 crash app
+  # (mc_arm.rs:5905 usize underflow)。flutter_avif 用 C 的 libavif/dav1d,
+  # 工业标准、稳定,直到 native_animated_image v0.3.0 砍掉 AVIF 之前必须保留。
+  flutter_avif: ^3.1.0
+  catcher_2: ^2.1.5
+  timezone: ^0.11.0
+  flutter_timezone: ^5.0.2
+  # Flutter 3.41+ 严格按 wght 查找字体，系统字体缺少某些 weight 会 fallback 到宋体等。
+  # 此包给 ThemeData 注入平台合适的中文字体到 fontFamilyFallback。
+  chinese_font_library: ^1.2.0
+
+  window_manager: ^0.5.1
+  flutter_acrylic: ^1.1.4
+
+  flutter_dynamic_icon_plus: ^1.4.0  # 动态应用图标切换
+  flutter_foreground_task: ^9.2.0  # Android 前台服务保活
+  workmanager: ^0.9.0+3            # iOS BGTaskScheduler
+
+  chewie: any
+  video_player: any
+  rhttp:
+    git:
+      url: https://github.com/Lingyan000/rhttp_plus.git
+      path: rhttp
+  dio_compatibility_layer: ^0.1.1
+  ffi: any
+dependency_overrides:
+  # super_clipboard 0.9.1 要求 device_info_plus <12.0.0，
+  # 但实际 12.x 接口兼容，强制使用项目版本
+  device_info_plus: 12.3.0
+  flutter_inappwebview_linux:
+    path: packages/flutter_inappwebview_linux
+  # 锁定 flutter_rust_bridge 版本，与 rhttp 插件的 codegen 版本保持一致
+  # rhttp 预编译原生库基于 2.11.1，升级会导致 rhttp.Rhttp.init() 失败
+  flutter_rust_bridge: 2.11.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  melos: ^7.5.1
+  dart_console: ^4.1.4
+
+melos:
+  useRootAsPackage: true
+
+flutter:
+  # 关闭 SwiftPM：Flutter 3.44 生成的 FlutterGeneratedPluginSwiftPackage 把
+  # macOS deployment target 写死 10.15，未读 Runner 的 11.0，导致 gal 等要求
+  # macOS 11.0 的插件 SPM 构建失败。CocoaPods 链路无此 bug。
+  # 待 Flutter 上游修复后移除（CocoaPods registry 2026-12-02 起转只读）。
+  config:
+    enable-swift-package-manager: false
+  uses-material-design: true
+  assets:
+    - assets/logo.svg
+    - assets/images/
+    - assets/certs/
+    - assets/icons/thinking/
+    - assets/polyfill/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

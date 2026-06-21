@@ -1,0 +1,25 @@
+{
+  "@@locale": "zh",
+  "nav_bookmarks": "书签",
+  "nav_drafts": "草稿",
+  "nav_history": "浏览历史",
+  "nav_home": "首页",
+  "nav_messages": "私信",
+  "nav_mine": "我的",
+  "nav_notifications": "通知",
+  "toast_authorizationFailed": "授权失败: {error}",
+  "@toast_authorizationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "toast_credentialCleared": "凭证已清除",
+  "toast_credentialIncomplete": "请填写完整的凭证信息",
+  "toast_credentialSaved": "凭证保存成功",
+  "toast_networkDisconnected": "网络连接已断开",
+  "toast_networkRestored": "网络已恢复",
+  "toast_operationFailedRetry": "操作失败，请重试",
+  "toast_pressAgainToExit": "再按一次返回键退出"
+}

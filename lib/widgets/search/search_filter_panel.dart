@@ -1,0 +1,1065 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../l10n/s.dart';
+import '../../models/category.dart';
+import '../../models/search_filter.dart';
+import '../../providers/category_provider.dart';
+import '../../utils/dialog_utils.dart';
+import '../../utils/font_awesome_helper.dart';
+import '../../utils/tag_icon_list.dart';
+import '../common/tag_selection_sheet.dart';
+import '../common/topic_badges.dart';
+
+/// 搜索高级过滤器面板
+/// 作为 BottomSheet 显示，支持分类、标签、状态、时间范围过滤
+class SearchFilterPanel extends ConsumerStatefulWidget {
+  /// 当前过滤条件
+  final SearchFilter filter;
+
+  /// 过滤条件变化回调
+  final ValueChanged<SearchFilter> onFilterChanged;
+
+  /// 是否隐藏搜索范围类型（主搜索页面不需要显示）
+  final bool hideInType;
+
+  const SearchFilterPanel({
+    super.key,
+    required this.filter,
+    required this.onFilterChanged,
+    this.hideInType = false,
+  });
+
+  @override
+  ConsumerState<SearchFilterPanel> createState() => _SearchFilterPanelState();
+}
+
+class _SearchFilterPanelState extends ConsumerState<SearchFilterPanel> {
+  late SearchFilter _localFilter;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _localFilter = widget.filter;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _updateFilter(SearchFilter newFilter) {
+    setState(() {
+      _localFilter = newFilter;
+    });
+  }
+
+  void _setCategory(Category? category) {
+    if (category == null) {
+      _updateFilter(_localFilter.copyWith(clearCategory: true));
+    } else {
+      // 查找父分类 slug
+      String? parentSlug;
+      if (category.parentCategoryId != null) {
+        final categoryMap = ref.read(categoryMapProvider).value;
+        if (categoryMap != null) {
+          final parent = categoryMap[category.parentCategoryId];
+          parentSlug = parent?.slug;
+        }
+      }
+      _updateFilter(_localFilter.copyWith(
+        categoryId: category.id,
+        categorySlug: category.slug,
+        categoryName: category.name,
+        parentCategorySlug: parentSlug,
+      ));
+    }
+  }
+
+  void _setStatus(SearchStatus? status) {
+    _updateFilter(_localFilter.copyWith(
+      status: status,
+      clearStatus: status == null,
+    ));
+  }
+
+  void _toggleTag(String tag) {
+    final currentTags = List<String>.from(_localFilter.tags);
+    if (currentTags.contains(tag)) {
+      currentTags.remove(tag);
+    } else {
+      currentTags.add(tag);
+    }
+    _updateFilter(_localFilter.copyWith(tags: currentTags));
+  }
+
+  void _setTags(List<String> tags) {
+    _updateFilter(_localFilter.copyWith(tags: tags));
+  }
+
+  void _setDateRange({DateTime? after, DateTime? before}) {
+    _updateFilter(_localFilter.copyWith(
+      afterDate: after,
+      beforeDate: before,
+      clearDateRange: after == null && before == null,
+    ));
+  }
+
+  void _clearAll() {
+    _updateFilter(_localFilter.clear());
+  }
+
+  Future<void> _openTagSearchSheet() async {
+    final tagsAsync = ref.read(tagsProvider);
+    final availableTags = tagsAsync.when(
+      data: (tags) => tags,
+      loading: () => <String>[],
+      error: (e, s) => <String>[],
+    );
+
+    final result = await showAppBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TagSelectionSheet(
+        availableTags: availableTags,
+        selectedTags: _localFilter.tags,
+        maxTags: 99,
+      ),
+    );
+
+    if (result != null && mounted) {
+      _setTags(result);
+    }
+  }
+
+  Future<void> _selectDateRange() async {
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: _localFilter.afterDate ?? now.subtract(const Duration(days: 30)),
+      end: _localFilter.beforeDate ?? now,
+    );
+
+    final result = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2010),
+      lastDate: now,
+      initialDateRange: initialRange,
+      locale: const Locale('zh', 'CN'),
+      helpText: context.l10n.search_selectDateRange,
+      cancelText: context.l10n.common_cancel,
+      confirmText: context.l10n.common_confirm,
+      saveText: context.l10n.common_confirm,
+    );
+
+    if (result != null && mounted) {
+      _setDateRange(after: result.start, before: result.end);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final categoriesAsync = ref.watch(categoriesProvider);
+    final tagsAsync = ref.watch(tagsProvider);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 顶部拖动柄
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 32,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // 标题栏
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  context.l10n.search_advancedSearch,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                // 重置按钮
+                Visibility(
+                  visible: _localFilter.isNotEmpty,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: TextButton(
+                    onPressed: _localFilter.isNotEmpty ? _clearAll : null,
+                    style: TextButton.styleFrom(
+                      foregroundColor: colorScheme.error,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: Text(context.l10n.common_reset),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // 内容区域
+          Expanded(
+            child: ListView(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              children: [
+                // 状态选择
+                Text(
+                  context.l10n.search_status,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildStatusSection(theme),
+
+                const SizedBox(height: 24),
+
+                // 时间范围
+                Text(
+                  context.l10n.search_dateRange,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildDateRangeSection(theme),
+
+                const SizedBox(height: 24),
+
+                // 分类选择
+                Text(
+                  context.l10n.search_category,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                categoriesAsync.when(
+                  data: (categories) => _buildCategoryGrid(
+                    context,
+                    categories,
+                    _localFilter.categoryId,
+                  ),
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                  error: (e, _) => Center(child: Text(context.l10n.search_categoryLoadFailed('$e'))),
+                ),
+
+                const SizedBox(height: 24),
+
+                // 标签选择
+                Row(
+                  children: [
+                    Text(
+                      context.l10n.search_tags,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: _openTagSearchSheet,
+                      icon: const Icon(Icons.search, size: 18),
+                      label: Text(context.l10n.common_searchMore),
+                      style: TextButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                tagsAsync.when(
+                  data: (hotTags) {
+                    // 找出已选但不在热门中的标签
+                    final extraSelectedTags = _localFilter.tags
+                        .where((t) => !hotTags.contains(t))
+                        .toList();
+
+                    if (hotTags.isEmpty && extraSelectedTags.isEmpty) {
+                      return Text(
+                        context.l10n.search_noPopularTags,
+                        style: TextStyle(color: colorScheme.outline),
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 已选的非热门标签
+                        if (extraSelectedTags.isNotEmpty) ...[
+                          Text(
+                            context.l10n.search_selectedTags,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTagWrap(extraSelectedTags, theme),
+                          const SizedBox(height: 16),
+                        ],
+                        // 热门标签
+                        if (hotTags.isNotEmpty) ...[
+                          Text(
+                            context.l10n.search_popularTags,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTagWrap(hotTags, theme),
+                        ],
+                      ],
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Text(context.l10n.search_tagsLoadFailed('$e')),
+                ),
+              ],
+            ),
+          ),
+
+          // 底部确认按钮区域
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    widget.onFilterChanged(_localFilter);
+                    Navigator.pop(context);
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(context.l10n.search_applyFilter, style: const TextStyle(fontSize: 16)),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusSection(ThemeData theme) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        // 全部选项
+        _FilterChip(
+          label: context.l10n.common_all,
+          isSelected: _localFilter.status == null,
+          onTap: () => _setStatus(null),
+        ),
+        // 状态选项
+        ...SearchStatus.values.map((status) => _FilterChip(
+              label: status.label,
+              isSelected: _localFilter.status == status,
+              onTap: () =>
+                  _setStatus(_localFilter.status == status ? null : status),
+            )),
+      ],
+    );
+  }
+
+  Widget _buildDateRangeSection(ThemeData theme) {
+    final hasDateRange =
+        _localFilter.afterDate != null || _localFilter.beforeDate != null;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        // 不限
+        _FilterChip(
+          label: context.l10n.search_noLimit,
+          isSelected: !hasDateRange,
+          onTap: () => _setDateRange(),
+        ),
+        // 快捷选项
+        _FilterChip(
+          label: context.l10n.search_lastWeek,
+          isSelected: false,
+          onTap: () {
+            final now = DateTime.now();
+            _setDateRange(
+              after: now.subtract(const Duration(days: 7)),
+              before: now,
+            );
+          },
+        ),
+        _FilterChip(
+          label: context.l10n.search_lastMonth,
+          isSelected: false,
+          onTap: () {
+            final now = DateTime.now();
+            _setDateRange(
+              after: now.subtract(const Duration(days: 30)),
+              before: now,
+            );
+          },
+        ),
+        _FilterChip(
+          label: context.l10n.search_lastYear,
+          isSelected: false,
+          onTap: () {
+            final now = DateTime.now();
+            _setDateRange(
+              after: now.subtract(const Duration(days: 365)),
+              before: now,
+            );
+          },
+        ),
+        // 自定义
+        _FilterChip(
+          label: hasDateRange ? _formatDateRange() : context.l10n.search_custom,
+          isSelected: hasDateRange,
+          onTap: _selectDateRange,
+          icon: Icons.calendar_today,
+        ),
+      ],
+    );
+  }
+
+  String _formatDateRange() {
+    final l10n = S.current;
+    final after = _localFilter.afterDate;
+    final before = _localFilter.beforeDate;
+    if (after != null && before != null) {
+      return '${_formatShortDate(after)} - ${_formatShortDate(before)}';
+    } else if (after != null) {
+      return l10n.search_afterDate(_formatShortDate(after));
+    } else if (before != null) {
+      return l10n.search_beforeDate(_formatShortDate(before));
+    }
+    return l10n.search_custom;
+  }
+
+  String _formatShortDate(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  Widget _buildCategoryGrid(
+    BuildContext context,
+    List<Category> categories,
+    int? selectedId,
+  ) {
+    // 顶级分类
+    final topCategories =
+        categories.where((c) => c.parentCategoryId == null).toList();
+
+    // 父类ID -> 子类列表 映射
+    final Map<int, List<Category>> subcategoryMap = {};
+    for (final category in categories) {
+      if (category.parentCategoryId != null) {
+        subcategoryMap.putIfAbsent(category.parentCategoryId!, () => []);
+        subcategoryMap[category.parentCategoryId]!.add(category);
+      }
+    }
+
+    // 分离孤立父类和组合父类
+    final List<Category> isolatedParents = [];
+    final List<Category> groupParents = [];
+
+    for (final parent in topCategories) {
+      if (subcategoryMap.containsKey(parent.id) &&
+          subcategoryMap[parent.id]!.isNotEmpty) {
+        groupParents.add(parent);
+      } else {
+        isolatedParents.add(parent);
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 顶部区域："全部" + 孤立父类
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            // "全部" 选项
+            _CategoryFilterItem(
+              name: S.current.common_all,
+              color: Colors.grey,
+              isSelected: selectedId == null,
+              onTap: () => _setCategory(null),
+              isAll: true,
+            ),
+            ...isolatedParents.map((category) {
+              final isSelected = selectedId == category.id;
+              final categoryColor = _parseColor(category.color);
+              return _CategoryFilterItem(
+                name: category.name,
+                color: categoryColor,
+                isSelected: isSelected,
+                category: category,
+                onTap: () => _setCategory(isSelected ? null : category),
+              );
+            }),
+          ],
+        ),
+
+        if (groupParents.isNotEmpty) const SizedBox(height: 16),
+
+        // 分组区域
+        ...groupParents.map((parent) {
+          final subcategories = subcategoryMap[parent.id]!;
+          final isParentSelected = selectedId == parent.id;
+          final parentColor = _parseColor(parent.color);
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 父分类标题
+                _CategoryFilterItem(
+                  name: parent.name,
+                  color: parentColor,
+                  isSelected: isParentSelected,
+                  category: parent,
+                  onTap: () => _setCategory(isParentSelected ? null : parent),
+                ),
+                const SizedBox(height: 8),
+
+                // 子分类列表
+                IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      // 左侧引导线
+                      Container(
+                        width: 2,
+                        margin: const EdgeInsets.only(
+                            left: 12, right: 12, top: 4, bottom: 4),
+                        decoration: BoxDecoration(
+                          color: parentColor.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
+                      // 子分类 Wrap
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: subcategories.map((sub) {
+                            final isSubSelected = selectedId == sub.id;
+                            final subColor = _parseColor(sub.color);
+                            return _CategoryFilterItem(
+                              name: sub.name,
+                              color: subColor,
+                              isSelected: isSubSelected,
+                              category: sub,
+                              isSubcategory: true,
+                              onTap: () =>
+                                  _setCategory(isSubSelected ? null : sub),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTagWrap(List<String> tags, ThemeData theme) {
+    final colorScheme = theme.colorScheme;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: tags.map((tag) {
+        final isSelected = _localFilter.tags.contains(tag);
+        final tagInfo = TagIconList.get(tag);
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _toggleTag(tag),
+            borderRadius: BorderRadius.circular(8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colorScheme.primaryContainer
+                    : colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isSelected
+                      ? colorScheme.primary.withValues(alpha: 0.5)
+                      : Colors.transparent,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (tagInfo != null || isSelected)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: Center(
+                          child: isSelected
+                              ? Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: colorScheme.primary,
+                                )
+                              : FaIcon(
+                                  tagInfo!.icon,
+                                  size: 12,
+                                  color: tagInfo.color,
+                                ),
+                        ),
+                      ),
+                    ),
+                  Text(
+                    tag,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Color _parseColor(String hex) {
+    try {
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (e) {
+      return Colors.grey;
+    }
+  }
+}
+
+/// 过滤器选项 Chip
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primaryContainer
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? colorScheme.primary.withValues(alpha: 0.5)
+                  : Colors.transparent,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.check, size: 14, color: colorScheme.primary),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 分类过滤项
+class _CategoryFilterItem extends StatelessWidget {
+  final String name;
+  final Color color;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isAll;
+  final Category? category;
+  final bool isSubcategory;
+
+  const _CategoryFilterItem({
+    required this.name,
+    required this.color,
+    required this.isSelected,
+    required this.onTap,
+    this.isAll = false,
+    this.category,
+    this.isSubcategory = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // 图标逻辑
+    FaIconData? faIcon;
+
+    if (category != null) {
+      faIcon = FontAwesomeHelper.getIcon(category!.icon);
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: EdgeInsets.only(
+            left: isSubcategory ? 6 : 10,
+            right: 10,
+            top: 6,
+            bottom: 6,
+          ),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isSelected ? color : color.withValues(alpha: 0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isAll)
+                Icon(Icons.all_inclusive, size: 12, color: theme.colorScheme.onSurface)
+              else if (faIcon != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: FaIcon(faIcon, size: 12, color: color),
+                )
+              else if (category?.readRestricted ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Icon(Icons.lock, size: 12, color: color),
+                )
+              else
+                _buildDot(),
+
+              if (!isAll && faIcon == null && !(category?.readRestricted ?? false))
+                const SizedBox(width: 6)
+              else if (isAll)
+                const SizedBox(width: 6),
+
+              Text(
+                name,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                  fontSize: isSubcategory ? 12 : null,
+                ),
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.check, size: 14, color: color),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDot() {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+/// 已激活过滤条件显示条
+class ActiveSearchFiltersBar extends StatelessWidget {
+  final SearchFilter filter;
+  final VoidCallback? onClearCategory;
+  final ValueChanged<String>? onRemoveTag;
+  final VoidCallback? onClearStatus;
+  final VoidCallback? onClearDateRange;
+  final VoidCallback? onClearAll;
+
+  const ActiveSearchFiltersBar({
+    super.key,
+    required this.filter,
+    this.onClearCategory,
+    this.onRemoveTag,
+    this.onClearStatus,
+    this.onClearDateRange,
+    this.onClearAll,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: filter.isEmpty
+          ? const SizedBox.shrink()
+          : Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainer.withValues(alpha: 0.5),
+                border: Border(
+                  bottom: BorderSide(
+                      color: colorScheme.outlineVariant.withValues(alpha: 0.2)),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.filter_list,
+                          size: 14, color: colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        context.l10n.search_currentFilter,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (onClearAll != null)
+                        InkWell(
+                          onTap: onClearAll,
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Text(
+                              context.l10n.search_clearAll,
+                              style:
+                                  TextStyle(fontSize: 12, color: colorScheme.error),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        // 分类
+                        if (filter.categoryId != null && onClearCategory != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: RemovableCategoryBadge(
+                              name: filter.categoryName ?? S.current.search_category,
+                              onDeleted: onClearCategory!,
+                              size: const BadgeSize(
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                radius: 8,
+                                iconSize: 12,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        // 状态
+                        if (filter.status != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _RemovableChip(
+                              label: filter.status!.label,
+                              onDeleted: onClearStatus,
+                            ),
+                          ),
+                        // 时间范围
+                        if (filter.afterDate != null || filter.beforeDate != null)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _RemovableChip(
+                              label: _formatDateRange(
+                                  filter.afterDate, filter.beforeDate),
+                              icon: Icons.calendar_today,
+                              onDeleted: onClearDateRange,
+                            ),
+                          ),
+                        // 标签
+                        ...filter.tags.map((tag) => Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: RemovableTagBadge(
+                                name: tag,
+                                onDeleted: () => onRemoveTag?.call(tag),
+                                size: const BadgeSize(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  radius: 8,
+                                  iconSize: 12,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  String _formatDateRange(DateTime? after, DateTime? before) {
+    final l10n = S.current;
+    if (after != null && before != null) {
+      return '${_formatShortDate(after)} - ${_formatShortDate(before)}';
+    } else if (after != null) {
+      return l10n.search_afterDate(_formatShortDate(after));
+    } else if (before != null) {
+      return l10n.search_beforeDate(_formatShortDate(before));
+    }
+    return l10n.search_dateRange;
+  }
+
+  String _formatShortDate(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+}
+
+/// 可移除的 Chip
+class _RemovableChip extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback? onDeleted;
+
+  const _RemovableChip({
+    required this.label,
+    this.icon,
+    this.onDeleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12, color: colorScheme.onSurfaceVariant),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (onDeleted != null) ...[
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: onDeleted,
+              child: Icon(Icons.close, size: 14, color: colorScheme.outline),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

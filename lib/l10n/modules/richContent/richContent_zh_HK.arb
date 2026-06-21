@@ -1,0 +1,14 @@
+{
+  "@@locale": "zh_HK",
+  "chat_thread": "線程",
+  "github_commentedOn": " 評論於 ",
+  "github_moreFiles": "... 還有 {count} 個文件",
+  "@github_moreFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "github_viewFullCode": "點擊查看完整代碼"
+}

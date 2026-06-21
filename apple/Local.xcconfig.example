@@ -1,0 +1,13 @@
+// Copy this file to apple/Local.xcconfig and adjust for your local setup.
+//
+// This file is intentionally ignored by git so each developer can keep
+// personal signing settings out of the shared Xcode project files.
+
+// 用法 1：填入 Apple Team ID，正常签名（最常见）
+FLUXDO_APPLE_DEVELOPMENT_TEAM = YOUR_TEAM_ID
+
+// 用法 2：本地无 Apple Team 时，完全关闭 macOS 签名以便本地调试
+// （把上面那行删掉或注释掉，然后取消下列 3 行的注释）
+// FLUXDO_APPLE_CODE_SIGN_IDENTITY_MACOSX =
+// FdLUXDO_APPLE_CODE_SIGN_STYLE = Manual
+// FLUXDO_APPLE_CODE_SIGNING_ALLOWED = NO

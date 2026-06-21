@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Trust system CAs -->
+            <certificates src="system"/>
+            <!-- Trust user-installed CAs (for MITM proxy) -->
+            <certificates src="user"/>
+            <!-- Trust our embedded proxy CA -->
+            <certificates src="@raw/proxy_ca"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

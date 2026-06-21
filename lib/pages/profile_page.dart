@@ -1,0 +1,1051 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user.dart';
+import '../providers/discourse_providers.dart';
+import '../services/discuz/equn_discuz_session.dart';
+import '../providers/equn_discuz_providers.dart';
+import '../providers/shortcut_provider.dart';
+import '../widgets/desktop_refresh_indicator.dart';
+import '../services/discourse_cache_manager.dart';
+import 'login_page.dart';
+import 'bookmarks_page.dart';
+import 'my_browser_page.dart';
+import 'my_topics_page.dart';
+import 'settings_page.dart';
+import '../widgets/common/loading_spinner.dart';
+import '../widgets/common/loading_dialog.dart';
+import '../widgets/common/flair_badge.dart';
+import '../widgets/common/smart_avatar.dart';
+import '../providers/app_state_refresher.dart';
+import '../widgets/profile_stats_card.dart';
+import '../widgets/common/spotlight_overlay.dart';
+import 'profile_stats_edit_page.dart';
+import '../l10n/s.dart';
+import '../navigation/nav_action_bus.dart';
+import '../utils/dialog_utils.dart';
+import '../services/emoji_handler.dart';
+import '../services/log/log_writer.dart';
+import '../widgets/layout/master_detail_layout.dart';
+
+/// 个人页面
+class ProfilePage extends ConsumerStatefulWidget {
+  final bool isActive;
+  const ProfilePage({super.key, this.isActive = false});
+
+  @override
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  late ScrollController _scrollController;
+  late ScrollController _rightScrollController;
+  bool _showTitle = false;
+  bool _isRefreshing = false;
+
+  // 统计卡片引导
+  static const String _guideKey = 'profile_stats_card_guide_shown';
+  final GlobalKey _statsCardKey = GlobalKey();
+  bool _guideShown = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    _rightScrollController = ScrollController();
+  }
+
+  @override
+  void didUpdateWidget(ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // tab 切换时 isActive 变化
+    if (widget.isActive && !oldWidget.isActive && !_guideShown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _tryShowStatsGuide();
+      });
+    }
+  }
+
+  /// 下拉刷新
+  Future<void> _refreshData() async {
+    if (!mounted) return;
+    setState(() => _isRefreshing = true);
+    try {
+      await Future.wait([
+        ref.read(currentUserProvider.notifier).refreshSilently(force: true),
+        ref.read(userSummaryProvider.notifier).refresh(),
+      ]);
+    } finally {
+      if (mounted) setState(() => _isRefreshing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    SpotlightOverlay.dismiss();
+    _scrollController.dispose();
+    _rightScrollController.dispose();
+    super.dispose();
+  }
+
+  /// 统计卡片引导：页面可见且卡片已渲染时触发（仅一次）
+  Future<void> _tryShowStatsGuide() async {
+    if (_guideShown) return;
+    if (!widget.isActive) return;
+
+    final renderObj =
+        _statsCardKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderObj == null || !renderObj.hasSize) return;
+
+    _guideShown = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_guideKey) == true) return;
+    await prefs.setBool(_guideKey, true);
+
+    if (!mounted) return;
+    SpotlightOverlay.show(
+      context,
+      targetKey: _statsCardKey,
+      message: S.current.profileStats_guideMessage,
+    );
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    // 发布"距顶进度"给底栏图标（NavActionBus 的 progress provider）
+    _publishProfileScrollProgress();
+
+    // 双栏模式下头像始终可见，无需标题动画
+    if (MasterDetailLayout.canShowBothPanesFor(context)) {
+      if (_showTitle) setState(() => _showTitle = false);
+      return;
+    }
+
+    // 当滚动超过一定距离（例如头像区域的高度）时显示标题
+    // 头像(72) + padding(大概20)
+    final show = _scrollController.offset > 80;
+    if (show != _showTitle) {
+      setState(() {
+        _showTitle = show;
+      });
+    }
+  }
+
+  void _publishProfileScrollProgress() {
+    final raw = _scrollController.offset;
+    final progress = raw < 0 ? 0.0 : raw;
+    final current = ref.read(navScrollProgressProvider(NavEntryIds.profile));
+    final atZero = progress == 0 && current != 0;
+    final crossed =
+        (progress >= navScrollIconThreshold) !=
+        (current >= navScrollIconThreshold);
+    if (!atZero && !crossed && (progress - current).abs() < 4.0) return;
+    ref.read(navScrollProgressProvider(NavEntryIds.profile).notifier).state =
+        progress;
+  }
+
+  Future<void> _goToLogin() async {
+    final result = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+    if (result == true && mounted) {
+      final loading = LoadingDialog.show(
+        context,
+        message: context.l10n.profile_loadingData,
+      );
+      try {
+        // 等加载弹框首帧结束后再刷新 provider，避免登录路由恢复时和
+        // Overlay/TickerMode 的构建时机相撞。
+        await WidgetsBinding.instance.endOfFrame;
+        if (!mounted) return;
+
+        await Future.wait([
+          ref.refresh(currentUserProvider.future),
+          ref.refresh(equnDiscuzProfileProvider.future),
+          ref.refresh(equnGuideTopicsProvider.future),
+          ref.refresh(equnForumGroupsProvider.future),
+        ]).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        debugPrint('[ProfilePage] 登录后刷新失败/超时: $e');
+        // 超时或错误时继续
+      } finally {
+        loading.hide();
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await showAppDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.profile_confirmLogout),
+        content: Text(context.l10n.profile_logoutContent),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.common_cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.common_exit),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      LoadingDialog.show(context, message: context.l10n.profile_loggingOut);
+
+      // 记录主动退出日志
+      LogWriter.instance.write({
+        'timestamp': DateTime.now().toIso8601String(),
+        'level': 'info',
+        'type': 'lifecycle',
+        'event': 'logout_active',
+        'message': '用户主动退出登录',
+      });
+
+      await ref.read(discourseServiceProvider).logout(callApi: false);
+      if (mounted) {
+        await AppStateRefresher.resetForLogout(
+          ProviderScope.containerOf(context, listen: false),
+        );
+      }
+
+      if (mounted) {
+        LoadingDialog.hide(context);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final userState = ref.watch(currentUserProvider);
+    final discuzProfile = ref.watch(equnDiscuzProfileProvider).value;
+    final isLoggedIn = userState.value != null || discuzProfile != null;
+    final user = userState.value;
+    final displayName =
+        discuzProfile?.nickname ??
+        user?.name ??
+        discuzProfile?.username ??
+        user?.username ??
+        '';
+    final avatarUrl = discuzProfile?.avatarUrl ?? user?.getAvatarUrl();
+
+    final isOffline =
+        userState.hasError && userState.hasValue && userState.value != null;
+    final showWideLayout = MasterDetailLayout.canShowBothPanesFor(context);
+
+    // 监听底栏派发的快捷动作（仅活跃 tab 响应）
+    ref.listen(navActionBusProvider, (_, event) {
+      if (event == null) return;
+      if (event.targetId != NavEntryIds.profile) return;
+      if (!widget.isActive) return;
+      switch (event.action) {
+        case NavAction.scrollToTop:
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+          break;
+        case NavAction.refresh:
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+          _refreshData();
+          ref.resetNavScrollProgress(NavEntryIds.profile);
+          break;
+      }
+    });
+
+    return Scaffold(
+      appBar: AppBar(
+        title: !showWideLayout && _showTitle && displayName.isNotEmpty
+            ? GestureDetector(
+                onTap: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SmartAvatar(
+                      imageUrl: avatarUrl,
+                      radius: 14,
+                      fallbackText: displayName,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      displayName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : null,
+        centerTitle: false,
+        actions: isLoggedIn
+            ? [
+                // 状态指示（固定占位，避免后方图标闪烁）
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: _isRefreshing
+                      ? const SizedBox(
+                          key: ValueKey('refreshing'),
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        )
+                      : isOffline
+                      ? SizedBox(
+                          key: const ValueKey('offline'),
+                          width: 48,
+                          height: 48,
+                          child: Icon(
+                            Icons.cloud_off_rounded,
+                            color: theme.colorScheme.outline,
+                          ),
+                        )
+                      : const SizedBox(key: ValueKey('idle'), width: 0),
+                ),
+              ]
+            : null,
+      ),
+      body: showWideLayout ? _buildWideBody(theme) : _buildMobileBody(theme),
+    );
+  }
+
+  /// 手机端：保持原有单列布局
+  Widget _buildMobileBody(ThemeData theme) {
+    final userState = ref.watch(currentUserProvider);
+    final discuzProfile = ref.watch(equnDiscuzProfileProvider).value;
+    final isLoggedIn = userState.value != null || discuzProfile != null;
+    final isLoadingInitial = userState.isLoading && !userState.hasValue;
+    final hasError = userState.hasError && !userState.hasValue;
+    final errorMessage = userState.error?.toString() ?? '';
+
+    return DesktopRefreshIndicator(
+      refreshNotifier: masterRefreshNotifier,
+      shouldRefresh: () => widget.isActive,
+      onRefresh: _refreshData,
+      child: ListView(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          const _ProfileHeader(),
+          const SizedBox(height: 24),
+
+          if (isLoadingInitial)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(64),
+                child: LoadingSpinner(),
+              ),
+            )
+          else if (hasError)
+            _buildError(theme, errorMessage)
+          else if (isLoggedIn)
+            _buildStatsCardWithGuide(),
+
+          if (isLoggedIn) ...[
+            _buildContentCard(theme),
+            const SizedBox(height: 20),
+          ],
+
+          _buildSystemAndToolsCard(theme),
+          const SizedBox(height: 32),
+          _buildAuthButton(theme, isLoggedIn),
+          const SizedBox(height: 48),
+        ],
+      ),
+    );
+  }
+
+  /// 平板/桌面端：左右双栏布局
+  Widget _buildWideBody(ThemeData theme) {
+    return Row(
+      children: [
+        SizedBox(width: 360, child: _buildLeftPanel(theme)),
+        VerticalDivider(
+          width: 1,
+          thickness: 0.5,
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+        Expanded(child: _buildRightPanel(theme)),
+      ],
+    );
+  }
+
+  /// 左面板：资料卡 + 统计 + 余额卡片 + 登录/退出按钮固定底部
+  Widget _buildLeftPanel(ThemeData theme) {
+    final userState = ref.watch(currentUserProvider);
+    final discuzProfile = ref.watch(equnDiscuzProfileProvider).value;
+    final isLoggedIn = userState.value != null || discuzProfile != null;
+    final isLoadingInitial = userState.isLoading && !userState.hasValue;
+    final hasError = userState.hasError && !userState.hasValue;
+    final errorMessage = userState.error?.toString() ?? '';
+
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              children: [
+                const _ProfileHeader(),
+                const SizedBox(height: 24),
+
+                if (isLoadingInitial)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(64),
+                      child: LoadingSpinner(),
+                    ),
+                  )
+                else if (hasError)
+                  _buildError(theme, errorMessage)
+                else if (isLoggedIn)
+                  _buildStatsCardWithGuide(),
+
+                if (isLoggedIn) ...[
+                  _buildContentCard(theme),
+                  const SizedBox(height: 24),
+                ],
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: _buildAuthButton(theme, isLoggedIn),
+        ),
+      ],
+    );
+  }
+
+  /// 右面板：功能菜单卡片
+  Widget _buildRightPanel(ThemeData theme) {
+    return DesktopRefreshIndicator(
+      refreshNotifier: masterRefreshNotifier,
+      shouldRefresh: () => widget.isActive,
+      onRefresh: _refreshData,
+      child: ListView(
+        controller: _rightScrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        children: [
+          _buildSystemAndToolsCard(theme),
+          const SizedBox(height: 48),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildError(ThemeData theme, String error) {
+    return Card(
+      color: theme.colorScheme.errorContainer.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.error_outline, color: theme.colorScheme.error),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                '${context.l10n.common_loadFailed}: $error',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(currentUserProvider),
+              child: Text(context.l10n.common_retry),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 统计卡片 + 引导触发
+  Widget _buildStatsCardWithGuide() {
+    return Column(
+      children: [
+        ProfileStatsCard(
+          statsCardKey: _statsCardKey,
+          onEdit: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileStatsEditPage()),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildContentCard(ThemeData theme) {
+    final actions = [
+      (
+        icon: Icons.article_rounded,
+        iconColor: Colors.blue,
+        title: context.l10n.profile_myTopics,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyTopicsPage()),
+        ),
+      ),
+      (
+        icon: Icons.bookmark_rounded,
+        iconColor: Colors.orange,
+        title: context.l10n.profile_myBookmarks,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BookmarksPage()),
+        ),
+      ),
+    ];
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 8.0;
+            final columns = constraints.maxWidth < 220
+                ? 1
+                : constraints.maxWidth < 300
+                ? 2
+                : 4;
+            final itemWidth =
+                (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final action in actions)
+                  SizedBox(
+                    width: itemWidth,
+                    child: _buildCompactActionItem(
+                      theme,
+                      action.icon,
+                      action.iconColor,
+                      action.title,
+                      action.onTap,
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactActionItem(
+    ThemeData theme,
+    IconData icon,
+    Color iconColor,
+    String title,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSystemAndToolsCard(ThemeData theme) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          _buildOptionTile(
+            icon: Icons.language_rounded,
+            iconColor: Colors.blue,
+            title: context.l10n.profile_myBrowser,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyBrowserPage()),
+            ),
+          ),
+          _buildOptionTile(
+            icon: Icons.settings_rounded,
+            iconColor: Colors.blueGrey,
+            title: context.l10n.profile_settings,
+            showDivider: false,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionTile({
+    required IconData icon,
+    Color? iconColor,
+    required String title,
+    required VoidCallback onTap,
+    bool showDivider = true,
+  }) {
+    final theme = Theme.of(context);
+    final finalIconColor = iconColor ?? theme.colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              child: Row(
+                children: [
+                  // iOS 风格的图标容器保留，因为这不违和且好看
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: finalIconColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: finalIconColor, size: 20),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.colorScheme.outline.withValues(alpha: 0.4),
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+            if (showDivider)
+              Padding(
+                padding: const EdgeInsets.only(left: 60), // 对齐文字
+                child: Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.2,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAuthButton(ThemeData theme, bool isLoggedIn) {
+    if (isLoggedIn) {
+      return Center(
+        child: TextButton.icon(
+          onPressed: _logout,
+          icon: Icon(
+            Icons.logout_rounded,
+            size: 18,
+            color: theme.colorScheme.error.withValues(alpha: 0.8),
+          ),
+          label: Text(
+            context.l10n.profile_logoutCurrentAccount,
+            style: TextStyle(
+              color: theme.colorScheme.error.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            backgroundColor: theme.colorScheme.errorContainer.withValues(
+              alpha: 0.1,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: FilledButton.icon(
+          onPressed: _goToLogin,
+          icon: const Icon(Icons.login_rounded, size: 20),
+          label: Text(
+            context.l10n.profile_loginLinuxDo,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+          ),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(double.infinity, 52),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+}
+
+class _ProfileHeader extends ConsumerWidget {
+  const _ProfileHeader();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final discuzProfile = ref.watch(equnDiscuzProfileProvider).value;
+    final userId = ref.watch(
+      currentUserProvider.select((value) => value.value?.id),
+    );
+    final isLoggedIn =
+        ref.watch(currentUserProvider.select((value) => value.value != null)) ||
+        discuzProfile != null;
+    final headerUserId = discuzProfile?.uid ?? userId;
+
+    return Container(
+      color: Colors.transparent,
+      child: Row(
+        children: [
+          _ProfileAvatarSection(
+            userId: headerUserId,
+            isLoggedIn: isLoggedIn,
+            discuzProfile: discuzProfile,
+          ),
+          const SizedBox(width: 20),
+          Expanded(child: _ProfileInfoSection(discuzProfile: discuzProfile)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileAvatarSection extends ConsumerWidget {
+  final int? userId;
+  final bool isLoggedIn;
+  final EqunDiscuzProfile? discuzProfile;
+
+  const _ProfileAvatarSection({
+    required this.userId,
+    required this.isLoggedIn,
+    required this.discuzProfile,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAvatarUrl = ref.watch(
+      currentUserProvider.select((value) => value.value?.getAvatarUrl() ?? ''),
+    );
+    final flairUrl = ref.watch(
+      currentUserProvider.select((value) => value.value?.flairUrl),
+    );
+    final flairName = ref.watch(
+      currentUserProvider.select((value) => value.value?.flairName),
+    );
+    final flairBgColor = ref.watch(
+      currentUserProvider.select((value) => value.value?.flairBgColor),
+    );
+    final flairColor = ref.watch(
+      currentUserProvider.select((value) => value.value?.flairColor),
+    );
+
+    return _ProfileAvatar(
+      key: ValueKey('profile-avatar-$userId'),
+      userId: userId,
+      avatarUrl: discuzProfile?.avatarUrl?.isNotEmpty == true
+          ? discuzProfile!.avatarUrl!
+          : userAvatarUrl,
+      isLoggedIn: isLoggedIn,
+      flairUrl: flairUrl,
+      flairName: flairName,
+      flairBgColor: flairBgColor,
+      flairColor: flairColor,
+    );
+  }
+}
+
+class _ProfileInfoSection extends ConsumerWidget {
+  final EqunDiscuzProfile? discuzProfile;
+
+  const _ProfileInfoSection({required this.discuzProfile});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final userId = ref.watch(
+      currentUserProvider.select((value) => value.value?.id),
+    );
+    final name = ref.watch(
+      currentUserProvider.select((value) => value.value?.name),
+    );
+    final username = ref.watch(
+      currentUserProvider.select((value) => value.value?.username),
+    );
+    final status = ref.watch(
+      currentUserProvider.select((value) => value.value?.status),
+    );
+    final resolvedUsername = discuzProfile?.username ?? username;
+    final resolvedUserId = discuzProfile?.uid ?? userId;
+    final isLoggedIn =
+        ref.watch(currentUserProvider.select((value) => value.value != null)) ||
+        discuzProfile != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          discuzProfile?.nickname ??
+              name ??
+              discuzProfile?.username ??
+              username ??
+              (isLoggedIn
+                  ? context.l10n.common_loading
+                  : context.l10n.profile_notLoggedIn),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: 22,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (isLoggedIn) ...[
+          const SizedBox(height: 4),
+          Text(
+            '@${resolvedUsername ?? ''}'
+            '${resolvedUserId != null ? ' · ID $resolvedUserId' : ''}',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (status != null) ...[
+            const SizedBox(height: 8),
+            _buildStatusChip(status, theme),
+          ],
+        ] else ...[
+          const SizedBox(height: 4),
+          Text(
+            context.l10n.profile_loginForMore,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// 独立的头像组件，使用 AutomaticKeepAliveClientMixin 避免重建
+class _ProfileAvatar extends StatefulWidget {
+  final int? userId;
+  final String avatarUrl;
+  final bool isLoggedIn;
+  final String? flairUrl;
+  final String? flairName;
+  final String? flairBgColor;
+  final String? flairColor;
+
+  const _ProfileAvatar({
+    super.key,
+    required this.userId,
+    required this.avatarUrl,
+    required this.isLoggedIn,
+    this.flairUrl,
+    this.flairName,
+    this.flairBgColor,
+    this.flairColor,
+  });
+
+  @override
+  State<_ProfileAvatar> createState() => _ProfileAvatarState();
+}
+
+class _ProfileAvatarState extends State<_ProfileAvatar>
+    with AutomaticKeepAliveClientMixin {
+  Widget? _cachedAvatarWithFlair;
+  String _cachedSignature = '';
+
+  @override
+  bool get wantKeepAlive => true;
+
+  String _buildCacheSignature() {
+    return '${widget.avatarUrl}_${widget.flairUrl}_${widget.flairName}_${widget.flairBgColor}_${widget.flairColor}';
+  }
+
+  @override
+  void didUpdateWidget(_ProfileAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newSignature = _buildCacheSignature();
+    if (newSignature != _cachedSignature) {
+      _cachedAvatarWithFlair = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持 AutomaticKeepAliveClientMixin
+
+    final signature = _buildCacheSignature();
+    if (_cachedAvatarWithFlair != null && signature == _cachedSignature) {
+      return _cachedAvatarWithFlair!;
+    }
+    _cachedSignature = signature;
+
+    final theme = Theme.of(context);
+
+    _cachedAvatarWithFlair = AvatarWithFlair(
+      key: ValueKey('profile-avatar-flair-${widget.userId}-${widget.flairUrl}'),
+      flairSize: 24,
+      flairRight: -2,
+      flairBottom: -2,
+      flairUrl: widget.flairUrl,
+      flairName: widget.flairName,
+      flairBgColor: widget.flairBgColor,
+      flairColor: widget.flairColor,
+      avatar: SmartAvatar(
+        imageUrl: widget.avatarUrl.isNotEmpty ? widget.avatarUrl : null,
+        radius: 36,
+        fallbackText: widget.isLoggedIn ? null : '',
+        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+        border: Border.all(
+          color: theme.colorScheme.surfaceContainerHighest,
+          width: 1,
+        ),
+      ),
+    );
+
+    return _cachedAvatarWithFlair!;
+  }
+}
+
+Widget _buildStatusEmoji(UserStatus status) {
+  final emoji = status.emoji;
+  if (emoji == null || emoji.isEmpty) return const SizedBox.shrink();
+
+  final isEmojiName =
+      emoji.contains(RegExp(r'[a-zA-Z0-9_]')) &&
+      !emoji.contains(RegExp(r'[^\x00-\x7F]'));
+
+  if (isEmojiName) {
+    final cleanName = emoji.replaceAll(':', '');
+    final emojiUrl = EmojiHandler().getEmojiUrl(cleanName);
+
+    return Image(
+      image: emojiImageProvider(emojiUrl),
+      width: 14,
+      height: 14,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+  }
+
+  return Text(emoji, style: const TextStyle(fontSize: 12, height: 1.2));
+}
+
+Widget _buildStatusChip(UserStatus status, ThemeData theme) {
+  final emoji = status.emoji;
+  final description = status.description;
+
+  if ((emoji == null || emoji.isEmpty) &&
+      (description == null || description.isEmpty)) {
+    return const SizedBox.shrink();
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+    decoration: BoxDecoration(
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(6),
+      border: Border.all(
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+      ),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (emoji != null && emoji.isNotEmpty) ...[
+          _buildStatusEmoji(status),
+          if (description != null && description.isNotEmpty)
+            const SizedBox(width: 4),
+        ],
+        if (description != null && description.isNotEmpty)
+          Flexible(
+            child: Text(
+              description,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+    ),
+  );
+}

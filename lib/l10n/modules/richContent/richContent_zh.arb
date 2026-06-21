@@ -1,0 +1,14 @@
+{
+  "@@locale": "zh",
+  "chat_thread": "线程",
+  "github_commentedOn": " 评论于 ",
+  "github_moreFiles": "... 还有 {count} 个文件",
+  "@github_moreFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "github_viewFullCode": "点击查看完整代码"
+}

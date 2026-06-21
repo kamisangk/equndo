@@ -1,0 +1,16 @@
+base_locale: zh
+fallback_strategy: base_locale
+input_directory: lib/l10n/modules
+input_file_pattern: .arb
+output_directory: lib/l10n/slang
+output_file_name: strings.g.dart
+locale_handling: true
+flutter_integration: true
+namespaces: true
+translate_var: t
+enum_name: AppLocale
+class_name: Translations
+translation_class_visibility: public
+key_case: snake
+param_case: camel
+string_interpolation: braces

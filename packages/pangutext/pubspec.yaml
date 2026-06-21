@@ -1,0 +1,8 @@
+name: pangutext
+description: "Pangu text spacing (CJK and ANS) port from pangu.js"
+version: 1.0.0
+
+environment:
+  sdk: ">=3.10.4 <4.0.0"
+
+resolution: workspace

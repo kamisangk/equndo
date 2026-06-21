@@ -1,0 +1,75 @@
+name: Cliff dry-run
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要 dry-run 的 tag（必须为已存在的 tag，例如 v0.2.15）'
+        required: true
+        default: 'v0.2.15'
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Checkout target tag
+        run: git checkout ${{ inputs.tag }}
+
+      - name: Mode 1 - Full CHANGELOG.md (beta folded into stable)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "============================================================"
+          echo "Mode 1: Full CHANGELOG.md (--ignore-tags beta|rc|alpha)"
+          echo "用途：写回 main 分支的 CHANGELOG.md，beta 提交折叠到对应 stable"
+          echo "============================================================"
+          git cliff --ignore-tags '.*-(alpha|beta|rc).*'
+
+      - name: Mode 2a - Release notes (beta 模拟)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "============================================================"
+          echo "Mode 2a: Release notes - beta 模拟（--current，不带 ignore-tags）"
+          echo "用途：beta 发版时，每个 beta 只显示自己相对上一个 tag 的增量"
+          echo "============================================================"
+          TAG="${{ inputs.tag }}"
+          PREV=$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)
+          if [ -n "$PREV" ]; then RANGE="${PREV}..${TAG}"; else RANGE="$TAG"; fi
+          echo "范围 = $RANGE"
+          git cliff "$RANGE" --strip header
+
+      - name: Mode 2b - Release notes (stable 模拟)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "============================================================"
+          echo "Mode 2b: Release notes - stable 模拟（--current + ignore beta/rc/alpha）"
+          echo "用途：stable 发版时，把整个 beta 周期内的 commit 全合并进来"
+          echo "============================================================"
+          TAG="${{ inputs.tag }}"
+          PREV=$(git describe --tags --abbrev=0 --exclude='*-*' "${TAG}^" 2>/dev/null || true)
+          if [ -n "$PREV" ]; then RANGE="${PREV}..${TAG}"; else RANGE="$TAG"; fi
+          echo "范围 = $RANGE"
+          git cliff "$RANGE" --strip header --ignore-tags '.*-(alpha|beta|rc).*'
+
+      - name: Mode 3 - AltStore plain text (stable 模拟)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "============================================================"
+          echo "Mode 3: AltStore plain notes（仅 stable 跑，所以始终带 ignore-tags）"
+          echo "用途：AltStore source.json 的 localizedDescription"
+          echo "============================================================"
+          git cliff --current --strip all --ignore-tags '.*-(alpha|beta|rc).*' \
+            --body "$(cat .github/cliff-plain.tera)"

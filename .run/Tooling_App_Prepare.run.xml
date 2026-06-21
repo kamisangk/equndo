@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Tooling -&gt; App Prepare" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
+    <option name="filePath" value="$PROJECT_DIR$/tool/project_prep.dart" />
+    <option name="arguments" value="app" />
+    <method v="2" />
+  </configuration>
+</component>
