@@ -1,6 +1,6 @@
 <div align=center>
 
-[![Release Downloads](https://img.shields.io/github/downloads/lingyan000/fluxdo/vVERSION/total?style=flat-square&logo=github)](https://img.shields.io/github/downloads/lingyan000/fluxdo/vVERSION/)
+[![Release Downloads](https://img.shields.io/github/downloads/kamisangk/equndo/vVERSION/total?style=flat-square&logo=github)](https://img.shields.io/github/downloads/kamisangk/equndo/vVERSION/)
 
 </div>
 

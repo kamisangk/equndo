@@ -570,7 +570,7 @@ jobs:
         run: |
           echo "::warning::git-cliff 失败，回退到 legacy bash"
           tags=($(git tag --merged HEAD --sort=-creatordate))
-          preTag=$(curl -s "https://api.github.com/repos/lingyan000/fluxdo/releases/latest" | \
+          preTag=$(curl -s "https://api.github.com/repos/kamisangk/equndo/releases/latest" | \
           sed -nE 's/.*"tag_name": "([^"]+)".*/\1/p' || echo "")
 
           out="release_notes.md"
