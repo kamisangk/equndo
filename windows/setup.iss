@@ -1,7 +1,7 @@
 #define MyAppName "EqunDO"
 #define MyAppExeName "fluxdo.exe"
 #define MyAppPublisher "EqunDO"
-#define MyAppURL "https://github.com/lingyan000/fluxdo"
+#define MyAppURL "https://github.com/kamisangk/equndo"
 
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
@@ -15,7 +15,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir=..\dist
-OutputBaseFilename=fluxdo-windows-x86_64-setup
+OutputBaseFilename=equndo-windows-x86_64-setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

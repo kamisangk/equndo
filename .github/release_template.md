@@ -39,8 +39,8 @@
         <tr>
         <td>Windows</td>
             <td>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-windows-x86_64-setup.exe"><img src="https://img.shields.io/badge/Setup-x64-0078D4.svg?logo=windows"></a><br>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-windows-x86_64.zip"><img src="https://img.shields.io/badge/ZIP-x64-2d7d9a.svg?logo=windows"></a>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-windows-x86_64-setup.exe"><img src="https://img.shields.io/badge/Setup-x64-0078D4.svg?logo=windows"></a><br>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-windows-x86_64.zip"><img src="https://img.shields.io/badge/ZIP-x64-2d7d9a.svg?logo=windows"></a>
             </td>
         </tr>
         <tr>

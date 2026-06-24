@@ -239,7 +239,7 @@ jobs:
         if: matrix.platform == 'windows'
         run: |
           cd build\windows\x64\runner\Release
-          7z a -tzip "..\..\..\..\..\dist\fluxdo-windows-x86_64.zip" .
+          7z a -tzip "..\..\..\..\..\dist\equndo-windows-x86_64.zip" .
 
       - name: Build Windows Installer (exe)
         if: matrix.platform == 'windows'
