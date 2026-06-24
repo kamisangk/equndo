@@ -179,8 +179,8 @@ jobs:
           cd build/ios/iphoneos
           mkdir Payload
           cp -r Runner.app Payload/
-          zip -r fluxdo-unsigned.ipa Payload
-          mv fluxdo-unsigned.ipa ../../../dist/
+          zip -r equndo-unsigned.ipa Payload
+          mv equndo-unsigned.ipa ../../../dist/
 
       - name: Install macOS dependencies
         if: matrix.platform == 'macos'
@@ -622,8 +622,8 @@ jobs:
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
           VERSION_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          DOWNLOAD_URL="https://github.com/lingyan000/fluxdo/releases/download/v${VERSION}/fluxdo-unsigned.ipa"
-          IPA_SIZE=$(stat -c%s "./dist/fluxdo-unsigned.ipa" 2>/dev/null || stat -f%z "./dist/fluxdo-unsigned.ipa")
+          DOWNLOAD_URL="https://github.com/kamisangk/equndo/releases/download/v${VERSION}/equndo-unsigned.ipa"
+          IPA_SIZE=$(stat -c%s "./dist/equndo-unsigned.ipa" 2>/dev/null || stat -f%z "./dist/equndo-unsigned.ipa")
           # 从 plain 版本按段落边界截断到 1500 字符以内，避免硬截到段落中间
           VERSION_DESC=$(awk 'BEGIN{RS=""; ORS="\n\n"; n=0} {n+=length($0)+2; if(n>1500) exit; print}' release_notes.txt)
 

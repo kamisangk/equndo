@@ -26,7 +26,7 @@
         <tr>
         <td>iOS</td>
             <td>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-unsigned.ipa"><img src="https://img.shields.io/badge/IPA-Unsigned-0c6bff.svg?logo=apple"></a>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-unsigned.ipa"><img src="https://img.shields.io/badge/IPA-Unsigned-0c6bff.svg?logo=apple"></a>
             </td>
         </tr>
         <tr>
