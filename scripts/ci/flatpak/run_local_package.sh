@@ -4,10 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
-ARTIFACT_PATH="${PROJECT_ROOT}/.artifacts/flatpak/fluxdo-flatpak-source-tree.tar.gz"
+ARTIFACT_PATH="${PROJECT_ROOT}/.artifacts/flatpak/equndo-flatpak-source-tree.tar.gz"
 CONTAINER_IMAGE="${FLATPAK_CI_IMAGE:-ghcr.io/flathub-infra/flatpak-github-actions:gnome-48}"
-OUTPUT_BUNDLE="${PROJECT_ROOT}/fluxdo-linux-x86_64.flatpak"
-WPE_LAYER_ASSET="fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst"
+OUTPUT_BUNDLE="${PROJECT_ROOT}/equndo-linux-x86_64.flatpak"
+WPE_LAYER_ASSET="equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst"
 WPE_LAYER_VERSION_FILE="${PROJECT_ROOT}/flatpak/wpe-layer.version"
 
 detect_github_repo() {
@@ -16,15 +16,16 @@ detect_github_repo() {
     return
   fi
 
-  local remote_url
-  remote_url="$(git -C "${PROJECT_ROOT}" config --get remote.origin.url 2>/dev/null || true)"
+  local remote remote_url
+  for remote in equndo origin; do
+    remote_url="$(git -C "${PROJECT_ROOT}" config --get "remote.${remote}.url" 2>/dev/null || true)"
+    if [[ "${remote_url}" =~ github\.com[:/]([^/]+/[^/.]+)(\.git)?$ ]]; then
+      printf '%s\n' "${BASH_REMATCH[1]}"
+      return
+    fi
+  done
 
-  if [[ "${remote_url}" =~ github\.com[:/]([^/]+/[^/.]+)(\.git)?$ ]]; then
-    printf '%s\n' "${BASH_REMATCH[1]}"
-    return
-  fi
-
-  printf '%s\n' "Lingyan000/fluxdo"
+  printf '%s\n' "kamisangk/equndo"
 }
 
 if ! command -v docker >/dev/null 2>&1; then
@@ -51,7 +52,7 @@ cleanup_generated_artifacts() {
   docker run --rm \
     -v "${PROJECT_ROOT}:/workspace" \
     "${CONTAINER_IMAGE}" \
-    sh -lc 'rm -rf /workspace/flatpak/stage/source-tree /workspace/flatpak/stage/wpe-layer /workspace/flatpak_app /workspace/repo /workspace/fluxdo-linux-x86_64.flatpak'
+    sh -lc 'rm -rf /workspace/flatpak/stage/source-tree /workspace/flatpak/stage/wpe-layer /workspace/flatpak_app /workspace/repo /workspace/equndo-linux-x86_64.flatpak'
 }
 
 prepare_wpe_layer() {
@@ -119,7 +120,7 @@ docker run --rm --privileged \
       --verbose \
       flatpak_app \
       flatpak/com.github.lingyan000.fluxdo.yml
-    flatpak build-bundle repo fluxdo-linux-x86_64.flatpak com.github.lingyan000.fluxdo stable
+    flatpak build-bundle repo equndo-linux-x86_64.flatpak com.github.lingyan000.fluxdo stable
   '
 
 echo "Flatpak bundle ready:"

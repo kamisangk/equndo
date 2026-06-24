@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>com.github.lingyan000.fluxdo</id>
-  <name>FluxDO</name>
-  <summary>Linux.do client built with Flutter</summary>
+  <name>EqunDO</name>
+  <summary>Equn forum client built with Flutter</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <launchable type="desktop-id">com.github.lingyan000.fluxdo.desktop</launchable>
   <description>
-    <p>FluxDO is a Flutter-based Linux.do desktop client packaged for Flatpak distribution.</p>
+    <p>EqunDO is a Flutter-based Equn forum client packaged for Flatpak distribution.</p>
   </description>
-  <url type="homepage">https://github.com/Lingyan000/fluxdo</url>
-  <url type="bugtracker">https://github.com/Lingyan000/fluxdo/issues</url>
+  <url type="homepage">https://github.com/kamisangk/equndo</url>
+  <url type="bugtracker">https://github.com/kamisangk/equndo/issues</url>
   <content_rating type="oars-1.1"/>
-  <developer id="com.github.lingyan000">
-    <name>Lingyan000</name>
+  <developer id="com.github.kamisangk">
+    <name>kamisangk</name>
   </developer>
   <provides>
     <binary>fluxdo</binary>

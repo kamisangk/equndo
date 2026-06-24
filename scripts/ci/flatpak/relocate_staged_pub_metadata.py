@@ -170,7 +170,7 @@ def _rewrite_package_config(
                     package["rootUri"] = updated
                     rewritten += 1
 
-    payload["generator"] = "fluxdo-flatpak"
+    payload["generator"] = "equndo-flatpak"
     payload["flutterRoot"] = _as_file_uri(source_tree_root / "flutter-sdk")
     payload["pubCache"] = _as_file_uri(source_tree_root / ".pub-cache")
 

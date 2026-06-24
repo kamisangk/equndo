@@ -286,7 +286,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flatpak-source-tree-internal
-          path: .artifacts/flatpak/fluxdo-flatpak-source-tree.tar.gz
+          path: .artifacts/flatpak/equndo-flatpak-source-tree.tar.gz
           if-no-files-found: error
           overwrite: true
 
@@ -311,7 +311,7 @@ jobs:
         id: fetch
         run: |
           mkdir -p dist
-          asset="fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst"
+          asset="equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst"
           base_url="https://github.com/${{ github.repository }}/releases/download/flatpak-wpe-layer-${{ steps.layer.outputs.version }}"
           if curl -fsIL "${base_url}/${asset}" > /dev/null; then
             curl -fL "${base_url}/${asset}" -o "dist/${asset}"
@@ -342,7 +342,7 @@ jobs:
             flatpak/com.github.lingyan000.fluxdo.wpe-layer.yml
           bash scripts/ci/flatpak/package_wpe_layer.sh \
             flatpak_wpe_layer \
-            dist/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
+            dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
 
       - name: Publish WPE layer release on cache miss
         if: steps.fetch.outputs.hit != 'true'
@@ -351,12 +351,12 @@ jobs:
           tag_name: flatpak-wpe-layer-${{ steps.layer.outputs.version }}
           name: Flatpak WPE Layer ${{ steps.layer.outputs.version }}
           body: |
-            Prebuilt Flatpak WPE dependency layer for Fluxdo.
+            Prebuilt Flatpak WPE dependency layer for EqunDO.
           prerelease: true
           make_latest: false
           files: |
-            dist/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
-            dist/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst.sha256
+            dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
+            dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst.sha256
           fail_on_unmatched_files: true
           overwrite_files: true
         env:
@@ -367,8 +367,8 @@ jobs:
         with:
           name: flatpak-wpe-layer-current
           path: |
-            dist/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
-            dist/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst.sha256
+            dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
+            dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst.sha256
           if-no-files-found: error
           overwrite: true
 
@@ -401,7 +401,7 @@ jobs:
           echo "解包前:" && df -h /
           rm -rf flatpak/stage/source-tree
           mkdir -p flatpak/stage/source-tree
-          tar -xzf .artifacts/flatpak/fluxdo-flatpak-source-tree.tar.gz -C flatpak/stage/source-tree
+          tar -xzf .artifacts/flatpak/equndo-flatpak-source-tree.tar.gz -C flatpak/stage/source-tree
           rm -rf .artifacts/flatpak
           ls -la flatpak/stage/source-tree
           du -sh flatpak/stage/source-tree flatpak/stage/wpe-layer || true
@@ -411,7 +411,7 @@ jobs:
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           manifest-path: flatpak/com.github.lingyan000.fluxdo.yml
-          bundle: fluxdo-linux-x86_64.flatpak
+          bundle: equndo-linux-x86_64.flatpak
           branch: stable
           repository-name: flathub
           arch: x86_64
@@ -422,7 +422,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: artifact-linux-flatpak-x86_64
-          path: fluxdo-linux-x86_64.flatpak
+          path: equndo-linux-x86_64.flatpak
           if-no-files-found: error
           overwrite: true
 

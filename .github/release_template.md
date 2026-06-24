@@ -46,7 +46,7 @@
         <tr>
         <td>Linux</td>
             <td>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-linux-x86_64.flatpak"><img src="https://img.shields.io/badge/Flatpak-x64-1793D1.svg?logo=linux"></a>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-linux-x86_64.flatpak"><img src="https://img.shields.io/badge/Flatpak-x64-1793D1.svg?logo=linux"></a>
             </td>
         </tr>
     </tbody>

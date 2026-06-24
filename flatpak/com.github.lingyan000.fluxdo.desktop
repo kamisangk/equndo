@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=FluxDO
-Comment=Linux.do client
+Name=EqunDO
+Comment=Equn forum client
 Exec=fluxdo %u
 Icon=com.github.lingyan000.fluxdo
 Terminal=false

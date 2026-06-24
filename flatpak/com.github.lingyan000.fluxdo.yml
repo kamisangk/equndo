@@ -35,7 +35,7 @@ modules:
         done
     sources:
       - type: archive
-        path: stage/wpe-layer/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
+        path: stage/wpe-layer/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
 
   - name: fluxdo
     buildsystem: simple
