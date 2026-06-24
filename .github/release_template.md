@@ -18,9 +18,9 @@
         <tr>
         <td>Android</td>
             <td>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-arm64-v8a.apk"><img src="https://img.shields.io/badge/APK-ARMv8-168039.svg?logo=android"></a><br>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-armeabi-v7a.apk"><img src="https://img.shields.io/badge/APK-ARMv7-45bf55.svg?logo=android"></a><br>
-                <a href="https://github.com/lingyan000/fluxdo/releases/download/vVERSION/fluxdo-x86_64.apk"><img src="https://img.shields.io/badge/APK-x64-96ed89.svg?logo=android"></a>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-arm64-v8a.apk"><img src="https://img.shields.io/badge/APK-ARMv8-168039.svg?logo=android"></a><br>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-armeabi-v7a.apk"><img src="https://img.shields.io/badge/APK-ARMv7-45bf55.svg?logo=android"></a><br>
+                <a href="https://github.com/kamisangk/equndo/releases/download/vVERSION/equndo-x86_64.apk"><img src="https://img.shields.io/badge/APK-x64-96ed89.svg?logo=android"></a>
             </td>
         </tr>
         <tr>

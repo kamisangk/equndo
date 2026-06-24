@@ -145,7 +145,7 @@ jobs:
           cmp -s core/doh_proxy/certs/ca.der android/app/src/main/res/raw/proxy_ca.der
           cmp -s core/doh_proxy/certs/ca.crt assets/certs/proxy_ca.pem
           mkdir -p dist
-          mv build/app/outputs/flutter-apk/app-release.apk dist/fluxdo-${{ matrix.arch }}.apk
+          mv build/app/outputs/flutter-apk/app-release.apk dist/equndo-${{ matrix.arch }}.apk
 
       - name: Authenticate to Google Cloud
         if: startsWith(matrix.platform, 'android')
