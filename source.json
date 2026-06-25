@@ -1,0 +1,22 @@
+{
+  "name": "FluxDO Source",
+  "identifier": "com.github.lingyan000.fluxdo.AltStore",
+  "apps": [
+    {
+      "name": "FluxDO",
+      "bundleIdentifier": "com.github.lingyan000.fluxdo",
+      "developerName": "lingyan000",
+      "localizedDescription": "A third-party client for LINUX DO community.",
+      "iconURL": "https://lingyan000.github.io/fluxdo/icon.png",
+      "versions": [
+        {
+          "version": "0.0.1",
+          "date": "2026-06-25T18:14:12Z",
+          "downloadURL": "https://github.com/kamisangk/equndo/releases/download/v0.0.1/equndo-unsigned.ipa",
+          "size": 36596766,
+          "localizedDescription": "- fix(ci): resolve macOS app path in workflow\n- chore(android): update package id to com.github.kamisangk.equndo\n- chore(ci): rename Linux release artifacts and Flatpak metadata\n- chore(ci): rename Windows release artifacts\n- chore(ci): rename macOS release artifacts\n- chore(ci): rename iOS release artifacts\n- chore(ci): rename Android release artifacts\n- chore(ci): point release metadata to EqunDO\n- Initial commit"
+        }
+      ]
+    }
+  ]
+}
