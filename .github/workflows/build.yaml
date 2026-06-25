@@ -194,22 +194,27 @@ jobs:
         run: |
           dart tool/flutterw.dart build macos --release
           mkdir -p dist
-          APP_PATH="build/macos/Build/Products/Release/fluxdo.app"
+          APP_PATH="$(find build/macos/Build/Products/Release -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          echo "MACOS_APP_PATH=$APP_PATH" >> "$GITHUB_ENV"
+          APP_NAME="$(basename "$APP_PATH")"
+          APP_EXECUTABLE="${APP_NAME%.app}"
           test -f "$APP_PATH/Contents/Frameworks/libdoh_proxy.dylib"
           test -f "$APP_PATH/Contents/Resources/native/doh_proxy_bin"
           test -x "$APP_PATH/Contents/Resources/native/doh_proxy_bin"
-          lipo -archs "$APP_PATH/Contents/MacOS/fluxdo" | grep -qw "${{ matrix.arch }}"
+          lipo -archs "$APP_PATH/Contents/MacOS/$APP_EXECUTABLE" | grep -qw "${{ matrix.arch }}"
           lipo -archs "$APP_PATH/Contents/Frameworks/libdoh_proxy.dylib" | grep -qw "${{ matrix.arch }}"
 
       - name: Package macOS DMG
         if: matrix.platform == 'macos'
         run: |
-          cat > dmg-config.json << 'DMGEOF'
+          test -n "${MACOS_APP_PATH:-}"
+          cat > dmg-config.json <<DMGEOF
           {
             "title": "EqunDO",
             "contents": [
               { "x": 448, "y": 344, "type": "link", "path": "/Applications" },
-              { "x": 192, "y": 344, "type": "file", "path": "build/macos/Build/Products/Release/fluxdo.app" }
+              { "x": 192, "y": 344, "type": "file", "path": "${MACOS_APP_PATH}" }
             ],
             "window": {
               "size": { "width": 660, "height": 500 }
