@@ -1,4 +1,4 @@
-package com.github.lingyan000.fluxdo
+package com.github.kamisangk.equndo
 
 import android.app.Application
 import android.util.Log

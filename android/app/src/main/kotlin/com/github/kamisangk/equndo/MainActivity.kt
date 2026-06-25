@@ -1,4 +1,4 @@
-package com.github.lingyan000.fluxdo
+package com.github.kamisangk.equndo
 
 import android.content.ActivityNotFoundException
 import android.content.ComponentName
@@ -56,9 +56,9 @@ class MainActivity : FlutterActivity() {
         super.onStop()
     }
 
-    private val CHANNEL = "com.github.lingyan000.fluxdo/browser"
-    private val CRASHLYTICS_CHANNEL = "com.github.lingyan000.fluxdo/crashlytics"
-    private val ICON_CHANNEL = "com.github.lingyan000.fluxdo/app_icon"
+    private val CHANNEL = "com.github.kamisangk.equndo/browser"
+    private val CRASHLYTICS_CHANNEL = "com.github.kamisangk.equndo/crashlytics"
+    private val ICON_CHANNEL = "com.github.kamisangk.equndo/app_icon"
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

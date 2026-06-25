@@ -245,7 +245,7 @@ Future<void> main() async {
     ProxySettingsService.instance.initialize(prefs),
     if (Platform.isAndroid)
       MethodChannel(
-        'com.github.lingyan000.fluxdo/crashlytics',
+        'com.github.kamisangk.equndo/crashlytics',
       ).invokeMethod('setCrashlyticsEnabled', {'enabled': crashlyticsEnabled}),
   ]);
   // rhttp (Rust reqwest) 初始化：在 ProxySettingsService 之后、NetworkSettingsService 之前

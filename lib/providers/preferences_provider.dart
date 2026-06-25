@@ -397,7 +397,7 @@ class PreferencesNotifier extends StateNotifier<AppPreferences> {
   static const String _editorToolbarToolsKey = 'pref_editor_toolbar_tools';
 
   static const _crashlyticsChannel = MethodChannel(
-    'com.github.lingyan000.fluxdo/crashlytics',
+    'com.github.kamisangk.equndo/crashlytics',
   );
 
   PreferencesNotifier(this._prefs)
