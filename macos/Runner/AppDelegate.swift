@@ -21,7 +21,7 @@ class AppDelegate: FlutterAppDelegate {
     return true
   }
 
-  // 注意: com.fluxdo/raw_cookie channel 和其它 cookie 相关 channel 一起
+  // 注意: com.github.kamisangk.equndo/raw_cookie channel 和其它 cookie 相关 channel 一起
   // 注册在 MainFlutterWindow.awakeFromNib (见 MainFlutterWindow.swift)。
   // 不要在 applicationDidFinishLaunching 注册 channel ——
   // 该时机 mainFlutterWindow?.contentViewController 可能还未就绪,

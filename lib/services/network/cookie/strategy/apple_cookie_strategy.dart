@@ -10,7 +10,7 @@ import 'default_cookie_strategy.dart';
 /// WKWebView 的 sharedCookiesEnabled 会从 HTTPCookieStorage.shared 读 cookie。
 /// 仅清 WKHTTPCookieStore 不够，需要同时清 HTTPCookieStorage.shared。
 class AppleCookieStrategy extends DefaultCookieStrategy {
-  static const _nativeCookieChannel = MethodChannel('com.fluxdo/cookie_storage');
+  static const _nativeCookieChannel = MethodChannel('com.github.kamisangk.equndo/cookie_storage');
 
   @override
   Future<void> clearWebViewCookies(

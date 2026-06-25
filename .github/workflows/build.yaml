@@ -344,7 +344,7 @@ jobs:
             --ccache \
             --verbose \
             flatpak_wpe_layer \
-            flatpak/com.github.lingyan000.fluxdo.wpe-layer.yml
+            flatpak/com.github.kamisangk.equndo.wpe-layer.yml
           bash scripts/ci/flatpak/package_wpe_layer.sh \
             flatpak_wpe_layer \
             dist/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst
@@ -415,7 +415,7 @@ jobs:
       - name: Build Flatpak bundle
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
-          manifest-path: flatpak/com.github.lingyan000.fluxdo.yml
+          manifest-path: flatpak/com.github.kamisangk.equndo.yml
           bundle: equndo-linux-x86_64.flatpak
           branch: stable
           repository-name: flathub

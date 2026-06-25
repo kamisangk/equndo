@@ -110,7 +110,7 @@ class ProxyCertificate {
     }
   }
 
-  static const _proxyCertChannel = MethodChannel('com.fluxdo/proxy_cert');
+  static const _proxyCertChannel = MethodChannel('com.github.kamisangk.equndo/proxy_cert');
 
   /// 将 CA 证书发送到原生层，返回是否信任成功
   static Future<bool> _sendCaCertToNative(String pem) async {

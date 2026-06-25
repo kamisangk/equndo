@@ -14,7 +14,6 @@ import 'app_logs_page.dart';
 
 const _equndoRepositoryUrl = 'https://github.com/kamisangk/equndo';
 const _equndoIssuesUrl = '$_equndoRepositoryUrl/issues';
-const _fluxdoRepositoryUrl = 'https://github.com/Lingyan000/fluxdo';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -284,9 +283,9 @@ class _AboutPageState extends State<AboutPage> {
             context,
             icon: Icons.fork_right_rounded,
             title: context.l10n.about_basedOnFluxDO,
-            subtitle: 'Lingyan000/fluxdo',
+            subtitle: 'kamisangk/equndo',
             onTap: () => launchUrl(
-              Uri.parse(_fluxdoRepositoryUrl),
+              Uri.parse(_equndoRepositoryUrl),
               mode: LaunchMode.externalApplication,
             ),
           ),

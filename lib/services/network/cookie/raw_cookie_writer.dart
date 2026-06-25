@@ -15,14 +15,14 @@ import 'raw_cookie_writer_fallback.dart';
 /// `docs/cookie-sync-design-v0.4.0.md` §5.4）。
 ///
 /// 平台支持矩阵:
-/// - Android / iOS / macOS: native method channel `com.fluxdo/raw_cookie`
+/// - Android / iOS / macOS: native method channel `com.github.kamisangk.equndo/raw_cookie`
 /// - Windows / Linux: Dart 层 [RawCookieWriterFallback] 包装
 ///   flutter_inappwebview 的 CookieManager (无需 native)
 class RawCookieWriter {
   RawCookieWriter._();
   static final instance = RawCookieWriter._();
 
-  static const _channel = MethodChannel('com.fluxdo/raw_cookie');
+  static const _channel = MethodChannel('com.github.kamisangk.equndo/raw_cookie');
 
   /// 当前平台是否有 native method channel 实现。
   bool get _hasNativeChannel =>

@@ -10,12 +10,12 @@
 CI 分成三部分：
 
 0. `flatpak-wpe-layer`
-   - 使用 `flatpak/com.github.lingyan000.fluxdo.wpe-layer.yml` 单独构建：
+   - 使用 `flatpak/com.github.kamisangk.equndo.wpe-layer.yml` 单独构建：
      - `unifdef`
      - `woff2`
      - `libwpe`
      - `wpewebkit`
-   - 把 Flatpak build root 下的 `files/` 打成 `fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst`。
+   - 把 Flatpak build root 下的 `files/` 打成 `equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst`。
    - 作为 workflow artifact 上传，并发布到 `flatpak-wpe-layer-<version>` 这个 prerelease tag。
    - 版本号由 `flatpak/wpe-layer.version` 控制，只有 WPE 依赖变化时才需要 bump。
 
@@ -46,7 +46,7 @@ CI 分成三部分：
    - 这里不再调用外层 `flutter build linux`，因为它在当前 Flutter 版本里仍会触发一条隐藏的 `pub get` 校验链，对 Flatpak sandbox 来说不可靠。
    - `flutter_inappwebview_linux` 继续使用真实 WPE 后端，但主应用 CI 不再自己源码编 `wpewebkit`。
    - Linux bundle 的 Dart/Flutter 资源仍然通过 CMake 自定义命令里的 `tool_backend.sh -> flutter assemble` 生成；前面已经对 staged SDK 的 `bin/flutter` 做了离线补丁，避免这条链回退到原始 wrapper。
-   - 最终把生成的 Linux bundle 安装到 `/app/fluxdo`，输出 `.flatpak`。
+   - 最终把生成的 Linux bundle 安装到 `/app/equndo`，输出 `.flatpak`。
 
 ## 这样做解决了什么
 
@@ -60,8 +60,8 @@ CI 分成三部分：
 
 - `.github/workflows/build.yaml`
 - `.github/workflows/flatpak-wpe-layer.yaml`
-- `flatpak/com.github.lingyan000.fluxdo.yml`
-- `flatpak/com.github.lingyan000.fluxdo.wpe-layer.yml`
+- `flatpak/com.github.kamisangk.equndo.yml`
+- `flatpak/com.github.kamisangk.equndo.wpe-layer.yml`
 - `flatpak/wpe-layer.version`
 - `linux/CMakeLists.txt`
 - `scripts/ci/flatpak/prepare_source_tree.sh`
@@ -87,7 +87,7 @@ CI 分成三部分：
 bash scripts/ci/flatpak/run_local_package.sh
 ```
 
-如果只想复用已经准备好的 `.artifacts/flatpak/fluxdo-flatpak-source-tree.tar.gz`，可以跳过 prepare：
+如果只想复用已经准备好的 `.artifacts/flatpak/equndo-flatpak-source-tree.tar.gz`，可以跳过 prepare：
 
 ```bash
 SKIP_PREPARE=1 bash scripts/ci/flatpak/run_local_package.sh
@@ -104,9 +104,9 @@ export PUB_CACHE="$PWD/.pub-cache"
 bash scripts/ci/flatpak/prepare_source_tree.sh
 rm -rf flatpak/stage/source-tree
 mkdir -p flatpak/stage/source-tree
-tar -xzf .artifacts/flatpak/fluxdo-flatpak-source-tree.tar.gz -C flatpak/stage/source-tree
-flatpak-builder --user --install-deps-from=flathub --force-clean --repo=repo flatpak_app flatpak/com.github.lingyan000.fluxdo.yml
-flatpak build-bundle repo fluxdo-linux-x86_64.flatpak com.github.lingyan000.fluxdo stable
+tar -xzf .artifacts/flatpak/equndo-flatpak-source-tree.tar.gz -C flatpak/stage/source-tree
+flatpak-builder --user --install-deps-from=flathub --force-clean --repo=repo flatpak_app flatpak/com.github.kamisangk.equndo.yml
+flatpak build-bundle repo equndo-linux-x86_64.flatpak com.github.kamisangk.equndo stable
 ```
 
 如果只想验证 SDK 里有没有对应开发包，可以按 Flatpak 官方文档提供的方式执行：
@@ -127,7 +127,7 @@ flatpak run --command=pkg-config org.gnome.Sdk//48 --modversion libsecret-1
 如果要本地复用一个已经下载好的 WPE 层归档，可以这样跑：
 
 ```bash
-LOCAL_WPE_LAYER_ARCHIVE=/path/to/fluxdo-flatpak-wpe-layer-gnome48-x86_64.tar.zst \
+LOCAL_WPE_LAYER_ARCHIVE=/path/to/equndo-flatpak-wpe-layer-gnome48-x86_64.tar.zst \
 SKIP_PREPARE=1 \
 bash scripts/ci/flatpak/run_local_package.sh
 ```
@@ -135,6 +135,6 @@ bash scripts/ci/flatpak/run_local_package.sh
 如果要验证预编译依赖层已经被主 manifest 正确安装到 app build root，可以在 Flatpak 构建结束后检查：
 
 ```bash
-flatpak-builder --run flatpak_app flatpak/com.github.lingyan000.fluxdo.yml sh -lc \
+flatpak-builder --run flatpak_app flatpak/com.github.kamisangk.equndo.yml sh -lc \
   'pkg-config --modversion wpe-webkit-2.0 && pkg-config --modversion wpe-platform-2.0 && pkg-config --modversion wpe-platform-headless-2.0'
 ```

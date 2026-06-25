@@ -8,7 +8,7 @@
 PRODUCT_NAME = EqunDO
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.github.lingyan000.fluxdo
+PRODUCT_BUNDLE_IDENTIFIER = com.github.kamisangk.equndo
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 EqunDO. All rights reserved.
@@ -18,8 +18,8 @@ MARKETING_VERSION = $(FLUTTER_BUILD_NAME)
 CURRENT_PROJECT_VERSION = $(FLUTTER_BUILD_NUMBER)
 
 // Apple 签名默认值（与原硬编码一致）。在 apple/Local.xcconfig 中可覆盖以本地关闭签名。
-FLUXDO_APPLE_CODE_SIGN_IDENTITY_MACOSX = Apple Development
-FLUXDO_APPLE_CODE_SIGN_STYLE = Automatic
-FLUXDO_APPLE_CODE_SIGNING_ALLOWED = YES
+EQUUNDO_APPLE_CODE_SIGN_IDENTITY_MACOSX = Apple Development
+EQUUNDO_APPLE_CODE_SIGN_STYLE = Automatic
+EQUUNDO_APPLE_CODE_SIGNING_ALLOWED = YES
 
 #include? "../../../apple/Local.xcconfig"

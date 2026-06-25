@@ -119,8 +119,8 @@ docker run --rm --privileged \
       --ccache \
       --verbose \
       flatpak_app \
-      flatpak/com.github.lingyan000.fluxdo.yml
-    flatpak build-bundle repo equndo-linux-x86_64.flatpak com.github.lingyan000.fluxdo stable
+      flatpak/com.github.kamisangk.equndo.yml
+    flatpak build-bundle repo equndo-linux-x86_64.flatpak com.github.kamisangk.equndo stable
   '
 
 echo "Flatpak bundle ready:"

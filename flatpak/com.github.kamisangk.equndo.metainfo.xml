@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.github.lingyan000.fluxdo</id>
+  <id>com.github.kamisangk.equndo</id>
   <name>EqunDO</name>
   <summary>Equn forum client built with Flutter</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <launchable type="desktop-id">com.github.lingyan000.fluxdo.desktop</launchable>
+  <launchable type="desktop-id">com.github.kamisangk.equndo.desktop</launchable>
   <description>
     <p>EqunDO is a Flutter-based Equn forum client packaged for Flatpak distribution.</p>
   </description>
@@ -16,6 +16,6 @@
     <name>kamisangk</name>
   </developer>
   <provides>
-    <binary>fluxdo</binary>
+    <binary>equndo</binary>
   </provides>
 </component>

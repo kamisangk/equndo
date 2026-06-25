@@ -31,8 +31,8 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val TAG = "AppLink"
-        private const val RAW_COOKIE_CHANNEL = "com.fluxdo/raw_cookie"
-        private const val WEBAUTHN_CHANNEL = "com.fluxdo/webauthn"
+        private const val RAW_COOKIE_CHANNEL = "com.github.kamisangk.equndo/raw_cookie"
+        private const val WEBAUTHN_CHANNEL = "com.github.kamisangk.equndo/webauthn"
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -98,7 +98,7 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "setCrashlyticsEnabled" -> {
                     val enable = call.argument<Boolean>("enabled") ?: false
-                    FluxdoApplication.setCrashlytics(enable)
+                    EqunDOApplication.setCrashlytics(enable)
                     result.success(null)
                 }
                 else -> result.notImplemented()

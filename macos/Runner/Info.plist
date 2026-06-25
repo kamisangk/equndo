@@ -35,10 +35,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.fluxdo.app</string>
+			<string>com.github.kamisangk.equndo.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fluxdo</string>
+				<string>equndo</string>
 			</array>
 		</dict>
 	</array>

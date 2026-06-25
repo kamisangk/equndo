@@ -4,10 +4,10 @@ project(runner LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "fluxdo")
+set(BINARY_NAME "equndo")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.github.lingyan000.fluxdo")
+set(APPLICATION_ID "com.github.kamisangk.equndo")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
@@ -143,6 +143,6 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 # Install .desktop file for URL scheme handling
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/runner/fluxdo.desktop"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/runner/equndo.desktop"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
   COMPONENT Runtime)

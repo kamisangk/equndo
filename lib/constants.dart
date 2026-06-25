@@ -27,7 +27,7 @@ class AppConstants {
   static String? _cachedMacSafariVersion;
 
   /// 与原生层通信的系统信息 channel（目前只有 macOS 用到）
-  static const MethodChannel _systemInfoChannel = MethodChannel('com.fluxdo/system_info');
+  static const MethodChannel _systemInfoChannel = MethodChannel('com.github.kamisangk.equndo/system_info');
 
   /// 缓存的 Client Hints 请求头（仅移动端可用）
   static Map<String, String>? _cachedClientHints;

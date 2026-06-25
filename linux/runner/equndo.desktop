@@ -1,10 +1,10 @@
 [Desktop Entry]
 Name=EqunDO
 Comment=Linux.do 客户端
-Exec=fluxdo %u
-Icon=fluxdo
+Exec=equndo %u
+Icon=equndo
 Terminal=false
 Type=Application
 Categories=Network;
-MimeType=x-scheme-handler/fluxdo;x-scheme-handler/https;
-StartupWMClass=fluxdo
+MimeType=x-scheme-handler/equndo;x-scheme-handler/https;
+StartupWMClass=EqunDO

@@ -65,7 +65,7 @@ class PerDeviceCertService {
     return true;
   }
 
-  static const _profileChannel = MethodChannel('com.fluxdo/profile_install');
+  static const _profileChannel = MethodChannel('com.github.kamisangk.equndo/profile_install');
 
   /// 通过原生层安装描述文件
   ///

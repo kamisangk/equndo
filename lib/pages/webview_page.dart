@@ -264,7 +264,7 @@ class _WebViewPageState extends ConsumerState<WebViewPage> {
                               if (io.Platform.isAndroid) {
                                 WidgetsBinding.instance
                                     .addPostFrameCallback((_) {
-                                  const MethodChannel('com.fluxdo/webauthn')
+                                  const MethodChannel('com.github.kamisangk.equndo/webauthn')
                                       .invokeMethod('enableWebAuthentication');
                                 });
                               }

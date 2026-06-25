@@ -9,7 +9,7 @@ import 'cookie_full_info.dart';
 
 /// Windows / Linux 平台的 RawCookieWriter Dart fallback 实现。
 ///
-/// macOS/iOS/Android 走 native method channel `com.fluxdo/raw_cookie`,
+/// macOS/iOS/Android 走 native method channel `com.github.kamisangk.equndo/raw_cookie`,
 /// 但 Win/Linux 没有 native 实现。这里用 `flutter_inappwebview` 的
 /// CookieManager 接口在 Dart 层等价实现 5 个原语:
 /// - setRawCookie

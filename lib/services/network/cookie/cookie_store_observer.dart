@@ -12,7 +12,7 @@ import 'session_cookie_sentinel.dart';
 ///
 /// 工作流:
 /// 1. macOS/iOS native 端注册 `WKHTTPCookieStoreObserver`,
-///    cookie 变化时通过 channel `com.fluxdo/cookie_observer` 推送
+///    cookie 变化时通过 channel `com.github.kamisangk.equndo/cookie_observer` 推送
 ///    `onCookiesChanged` 事件
 /// 2. 本服务监听该事件,debounce 500ms 后对所有已知 url 跑 sweepAll
 /// 3. native 端在我们自己 setCookie/delete 时通过 internalWriteCount
@@ -23,7 +23,7 @@ class CookieStoreObserver {
   CookieStoreObserver._();
   static final CookieStoreObserver instance = CookieStoreObserver._();
 
-  static const _channel = MethodChannel('com.fluxdo/cookie_observer');
+  static const _channel = MethodChannel('com.github.kamisangk.equndo/cookie_observer');
   static const Duration _debounceWindow = Duration(milliseconds: 500);
 
   bool _attached = false;

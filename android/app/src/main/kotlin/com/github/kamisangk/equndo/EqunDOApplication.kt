@@ -6,10 +6,10 @@ import android.webkit.WebView
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 
-class FluxdoApplication : Application() {
+class EqunDOApplication : Application() {
 
     companion object {
-        private var appInstance: FluxdoApplication? = null
+        private var appInstance: EqunDOApplication? = null
 
         /**
          * 设置 Crashlytics 开关。

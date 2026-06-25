@@ -12,7 +12,7 @@ import '../network/discourse_dio.dart';
 import '../../models/notification.dart';
 
 /// iOS 后台任务标识符
-const String kNotificationPollTask = 'com.fluxdo.notificationPoll';
+const String kNotificationPollTask = 'com.github.kamisangk.equndo.notificationPoll';
 
 /// SharedPreferences 键名
 const String _kUserId = 'bg_notification_user_id';

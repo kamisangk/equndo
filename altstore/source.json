@@ -1,13 +1,13 @@
 {
-  "name": "FluxDO Source",
-  "identifier": "com.github.lingyan000.fluxdo.AltStore",
+  "name": "EqunDO Source",
+  "identifier": "com.github.kamisangk.equndo.AltStore",
   "apps": [
     {
-      "name": "FluxDO",
-      "bundleIdentifier": "com.github.lingyan000.fluxdo",
-      "developerName": "lingyan000",
+      "name": "EqunDO",
+      "bundleIdentifier": "com.github.kamisangk.equndo",
+      "developerName": "kamisangk",
       "localizedDescription": "A third-party client for LINUX DO community.",
-      "iconURL": "https://lingyan000.github.io/fluxdo/icon.png",
+      "iconURL": "https://kamisangk.github.io/equndo/icon.png",
       "versions": []
     }
   ]

@@ -1,10 +1,10 @@
 [Desktop Entry]
 Name=EqunDO
 Comment=Equn forum client
-Exec=fluxdo %u
-Icon=com.github.lingyan000.fluxdo
+Exec=equndo %u
+Icon=com.github.kamisangk.equndo
 Terminal=false
 Type=Application
 Categories=Network;
-MimeType=x-scheme-handler/fluxdo;
-StartupWMClass=fluxdo
+MimeType=x-scheme-handler/equndo;
+StartupWMClass=EqunDO
