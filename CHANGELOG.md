@@ -2,7 +2,7 @@
 
 所有版本的变更记录。beta / rc 版本提交在 stable 发版时会折叠并入对应 stable 版本。
 
-## [0.0.1] - 2026-06-25
+## [0.0.1] - 2026-06-26
 
 
 ### 🔧 其他
@@ -12,9 +12,9 @@
 
 
 
-**Full Changelog**: https://github.com/lingyan000/fluxdo/compare/v0.0.1...v0.0.1
+**Full Changelog**: https://github.com/lingyan000/fluxdo/compare/flatpak-wpe-layer-gnome48-v2...v0.0.1
 
-## [0.0.1] - 2026-06-25
+## [flatpak-wpe-layer-gnome48-v2] - 2026-06-25
 
 
 ### 🐛 修复
