@@ -11,10 +11,10 @@
       "versions": [
         {
           "version": "0.0.1",
-          "date": "2026-06-25T18:14:12Z",
+          "date": "2026-06-26T01:03:01Z",
           "downloadURL": "https://github.com/kamisangk/equndo/releases/download/v0.0.1/equndo-unsigned.ipa",
-          "size": 36596766,
-          "localizedDescription": "- fix(ci): resolve macOS app path in workflow\n- chore(android): update package id to com.github.kamisangk.equndo\n- chore(ci): rename Linux release artifacts and Flatpak metadata\n- chore(ci): rename Windows release artifacts\n- chore(ci): rename macOS release artifacts\n- chore(ci): rename iOS release artifacts\n- chore(ci): rename Android release artifacts\n- chore(ci): point release metadata to EqunDO\n- Initial commit"
+          "size": 36596725,
+          "localizedDescription": "- chore: remove legacy fluxdo naming from desktop platforms\n\n- fix(ci): resolve macOS app path in workflow\n- chore(android): update package id to com.github.kamisangk.equndo\n- chore(ci): rename Linux release artifacts and Flatpak metadata\n- chore(ci): rename Windows release artifacts\n- chore(ci): rename macOS release artifacts\n- chore(ci): rename iOS release artifacts\n- chore(ci): rename Android release artifacts\n- chore(ci): point release metadata to EqunDO\n- Initial commit"
         }
       ]
     }
